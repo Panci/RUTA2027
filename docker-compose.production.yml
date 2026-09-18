@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # Database: PostgreSQL 16 with persistent volume
+  postgres:
+    image: postgres:16-alpine
+    container_name: ruta2027-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ruta2027_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-SuperSecurePassword2027!}
+      POSTGRES_DB: ${POSTGRES_DB:-ruta2027_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ruta2027-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ruta2027_admin} -d ${POSTGRES_DB:-ruta2027_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Application: Next.js Standalone
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ruta2027-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ruta2027_admin}:${POSTGRES_PASSWORD:-SuperSecurePassword2027!}@postgres:5432/${POSTGRES_DB:-ruta2027_db}?schema=public
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-generate_a_random_32_byte_secret_with_openssl}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-https://tudominio-campana.es}
+      PORT: 3000
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    networks:
+      - ruta2027-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ruta2027.rule=Host(`${APP_DOMAIN:-campana.tudominio.es}`)"
+      - "traefik.http.routers.ruta2027.entrypoints=websecure"
+      - "traefik.http.routers.ruta2027.tls.certresolver=letsencrypt"
+      - "traefik.http.services.ruta2027.loadbalancer.server.port=3000"
+
+  # Automatic Scheduled Backups
+  postgres-backup:
+    image: postgres:16-alpine
+    container_name: ruta2027-backup
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-ruta2027_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-SuperSecurePassword2027!}
+      POSTGRES_DB: ${POSTGRES_DB:-ruta2027_db}
+      BACKUP_KEEP_DAYS: 14
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup-cron.sh:/usr/local/bin/backup-cron.sh:ro
+    entrypoint: ["/bin/sh", "-c", "chmod +x /usr/local/bin/backup-cron.sh && echo '0 3 * * * /usr/local/bin/backup-cron.sh' > /var/spool/cron/crontabs/root && crond -f -l 2"]
+    networks:
+      - ruta2027-net
+
+volumes:
+  postgres_data:
+    name: ruta2027_postgres_data
+
+networks:
+  ruta2027-net:
+    name: ruta2027_network
+    driver: bridge

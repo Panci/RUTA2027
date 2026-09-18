@@ -1,0 +1,342 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 1. Usuarios y Control de Acceso (RBAC)
+model User {
+  id           String       @id @default(cuid())
+  name         String
+  email        String       @unique
+  passwordHash String
+  role         String       @default("VOLUNTEER") // ADMIN, CAMPAIGN_DIRECTOR, CANDIDATE, COMM_LEAD, DISTRICT_LEAD, VOLUNTEER
+  districtId   String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  assignedTasks ActionTask[]
+  milestones    Milestone[]
+  auditLogs     AuditLog[]
+}
+
+// 2. Configuración General de Campaña
+model Campaign {
+  id                 String       @id @default(cuid())
+  name               String
+  municipality       String
+  electionDate       DateTime     // Prevista: Mayo 2027
+  candidacyName      String       // Nombre de la candidatura
+  partyOrCoalition   String       // Partido o coalición
+  politicalGoal      String       // GANAR, GOBERNAR, REPRESENTACION, FORMAR_GOBIERNO, POSICIONAMIENTO
+  teamDescription    String?
+  availableResources String?
+  mainAdversaries    String?
+  strengths          String?
+  weaknesses         String?
+  risks              String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  districts           District[]
+  parties             Party[]
+  diagnostics         StrategicDiagnostic[]
+  strategy            CampaignStrategy?
+  priorities          CampaignPriority[]
+  phases              RoadmapPhase[]
+  actionTasks         ActionTask[]
+  messageBank         MessageBank[]
+  weeklyMeetings      WeeklyMeeting[]
+  weeklyReports       WeeklyReport[]
+  simulations         SimulationScenario[]
+  auditLogs           AuditLog[]
+}
+
+// 3. Organización Territorial por Distritos
+model District {
+  id                   String        @id @default(cuid())
+  campaignId           String
+  campaign             Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  code                 String
+  name                 String
+  electoralRoll        Int           @default(0) // Censo
+  pollingStationsCount Int           @default(0) // Mesas electorales
+  mainIssues           String?       // Problemas principales
+  territorialFeatures  String?       // Características territoriales
+  targetAudience       String?       // Público prioritario agregado
+  leadUserId           String?       // Responsable territorial
+  strategicGoal        String?       // Objetivo estratégico
+  assignedResources    String?       // Recursos asignados
+  risksOpportunities   String?       // Riesgos y oportunidades
+  classification       String        @default("COMPETENCIA_ABIERTA") // FORTALEZA, CRECIMIENTO, DEFENSA, OPORTUNIDAD, COMPETENCIA_ABIERTA, BAJA_PARTICIPACION, PRIORIDAD_TERRITORIAL
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  electionResults      ElectionResult2023[]
+  diagnostics          StrategicDiagnostic[]
+  actionTasks          ActionTask[]
+  messages             MessageBank[]
+
+  @@unique([campaignId, code])
+}
+
+// 4. Partidos y Candidaturas (2023 y 2027)
+model Party {
+  id                 String               @id @default(cuid())
+  campaignId         String
+  campaign           Campaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  name               String
+  acronym            String
+  colorHex           String               @default("#64748b")
+  isOwnParty         Boolean              @default(false)
+  coalition          String?
+  candidateName      String?
+  concejales2023     Int                  @default(0)
+  votes2023          Int                  @default(0)
+  percent2023        Float                @default(0.0)
+  mainTopics         String?
+  keyMessages        String?
+  strengths          String?
+  weaknesses         String?
+  potentialAlliances String?
+  risksOpportunities String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  electionResults    ElectionResult2023[]
+  competitorLogs     CompetitorTracking[]
+  relatedTasks       ActionTask[]
+
+  @@unique([campaignId, acronym])
+}
+
+// 5. Resultados Electorales de 2023 (Línea Base)
+model ElectionResult2023 {
+  id          String   @id @default(cuid())
+  districtId  String
+  district    District @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  partyId     String
+  party       Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  census      Int      @default(0)
+  turnout     Int      @default(0)
+  abstention  Int      @default(0)
+  validVotes  Int      @default(0)
+  blankVotes  Int      @default(0)
+  nullVotes   Int      @default(0)
+  votes       Int      @default(0)
+  percent     Float    @default(0.0)
+  concejales  Int      @default(0)
+  position    Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([districtId, partyId])
+}
+
+// 6. Diagnóstico Estratégico (Matriz DAFO Municipal y por Distrito)
+model StrategicDiagnostic {
+  id                 String    @id @default(cuid())
+  campaignId         String
+  campaign           Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  districtId         String?
+  district           District? @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  situationOverview  String?   // Situación política
+  citizenProblems    String?   // Problemas ciudadanos
+  strengths          String?   // Fortalezas
+  weaknesses         String?   // Debilidades
+  opportunities      String?   // Oportunidades
+  threats            String?   // Amenazas
+  teamCapabilities   String?   // Capacidades reales del equipo
+  availableResources String?   // Recursos disponibles
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+// 7. Estrategia Central: Objetivo, Público y Posicionamiento
+model CampaignStrategy {
+  id                String   @id @default(cuid())
+  campaignId        String   @unique
+  campaign          Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  mainGoal          String   // Objetivo político principal
+  targetAudience    String   // Público prioritario en términos agregados
+  brandIdea1        String?  // Idea 1 con la que identificar la candidatura
+  brandIdea2        String?  // Idea 2
+  brandIdea3        String?  // Idea 3
+  messagesToRepeat  String?  // Mensajes que deben repetirse
+  topicsToAvoid     String?  // Temas que conviene evitar
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// 8. Las Tres Prioridades Políticas Irrenunciables
+model CampaignPriority {
+  id           String       @id @default(cuid())
+  campaignId   String
+  campaign     Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  orderNumber  Int          // 1, 2 o 3
+  title        String
+  description  String
+  targetMetric String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  actionTasks  ActionTask[]
+
+  @@unique([campaignId, orderNumber])
+}
+
+// 9. Hoja de Ruta (7 Fases 2026-2027)
+model RoadmapPhase {
+  id          String      @id @default(cuid())
+  campaignId  String
+  campaign    Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  phaseNumber Int         // 1 a 7
+  name        String      // Diagnóstico, Posicionamiento, Presencia, Activación, Contacto, Campaña, Movilización
+  startDate   DateTime
+  endDate     DateTime
+  objectives  String?
+  indicators  String?
+  risks       String?
+  status      String      @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  milestones  Milestone[]
+
+  @@unique([campaignId, phaseNumber])
+}
+
+// 10. Hitos de la Hoja de Ruta
+model Milestone {
+  id            String       @id @default(cuid())
+  phaseId       String
+  phase         RoadmapPhase @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  title         String
+  dueDate       DateTime
+  responsibleId String?
+  responsible   User?        @relation(fields: [responsibleId], references: [id], onDelete: SetNull)
+  isCompleted   Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+// 11. Acciones, Tareas, Actos y Visitas ("Esta Semana")
+model ActionTask {
+  id                String            @id @default(cuid())
+  campaignId        String
+  campaign          Campaign          @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  type              String            @default("TASK") // TASK, EVENT, VISIT, MEETING, MEDIA, STREET
+  title             String
+  description       String?
+  districtId        String?
+  district          District?         @relation(fields: [districtId], references: [id], onDelete: SetNull)
+  priorityId        String?
+  priority          CampaignPriority? @relation(fields: [priorityId], references: [id], onDelete: SetNull)
+  competitorPartyId String?
+  competitorParty   Party?            @relation(fields: [competitorPartyId], references: [id], onDelete: SetNull)
+  responsibleId     String?
+  responsible       User?             @relation(fields: [responsibleId], references: [id], onDelete: SetNull)
+  targetAudience    String?
+  keyMessage        String?
+  dueDate           DateTime
+  status            String            @default("PENDING") // PENDING, IN_PROGRESS, BLOCKED, COMPLETED
+  resultSummary     String?
+  nextStep          String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+// 12. Banco de Mensajes y Argumentarios
+model MessageBank {
+  id         String    @id @default(cuid())
+  campaignId String
+  campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  districtId String?
+  district   District? @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  category   String    // KEY_MESSAGE, ATTACK_RESPONSE, FAQ, LOCAL_DATA, STORY_EXAMPLE, DISTRICT_SPECIFIC
+  title      String
+  content    String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+// 13. Seguimiento y Radar de Competidores
+model CompetitorTracking {
+  id                        String   @id @default(cuid())
+  partyId                   String
+  party                     Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  type                      String   // STATEMENT, PROPOSAL, EVENT, ATTACK, ALLIANCE, BLUNDER, CANDIDATE_CHANGE
+  title                     String
+  description               String
+  opportunityToDifferentiate String?
+  date                      DateTime @default(now())
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+}
+
+// 14. Reuniones Semanales
+model WeeklyMeeting {
+  id              String   @id @default(cuid())
+  campaignId      String
+  campaign        Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  meetingDate     DateTime
+  agenda          String   // Orden del día
+  decisionsTaken  String   // Decisiones tomadas
+  roadblocks      String?  // Bloqueos
+  priorityChanges String?  // Cambios en prioridades
+  risksDetected   String?  // Riesgos detectados
+  nextReviewDate  DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// 15. Informes Semanales
+model WeeklyReport {
+  id                String   @id @default(cuid())
+  campaignId        String
+  campaign          Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  weekNumber        Int
+  year              Int
+  whatWasDone       String   // Qué se hizo
+  whatWasNotDone    String   // Qué no se hizo
+  districtSummary   String   // Qué ocurrió en cada distrito
+  competitorSummary String   // Qué hicieron los competidores
+  lessonsLearned    String   // Qué aprendió el equipo
+  whatMustChange    String   // Qué debe cambiar
+  nextWeekPlan      String   // Qué se hará la semana siguiente
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([campaignId, year, weekNumber])
+}
+
+// 16. Simulaciones Electorales Hipotéticas
+model SimulationScenario {
+  id                 String   @id @default(cuid())
+  campaignId         String
+  campaign           Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  name               String
+  turnoutAdjustment  Float    @default(0.0) // Delta en %
+  partiesInputJson   String   // Ajustes de votos/porcentajes por candidatura
+  dhondtResultsJson  String   // Distribución resultante de concejales
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+// 17. Registro de Auditoría y Trazabilidad
+model AuditLog {
+  id         String   @id @default(cuid())
+  campaignId String?
+  campaign   Campaign? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userName   String
+  action     String   // CREATE, UPDATE, DELETE, IMPORT, EXPORT
+  resource   String   // Tareas, Distritos, Partidos, etc.
+  details    String
+  timestamp  DateTime @default(now())
+}
