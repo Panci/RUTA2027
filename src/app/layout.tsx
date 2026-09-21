@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import Sidebar from '@/components/Sidebar';
 import Navbar from '@/components/Navbar';
@@ -6,6 +6,9 @@ import Navbar from '@/components/Navbar';
 export const metadata: Metadata = {
   title: 'Ruta 2027 — Estrategia de Campaña Municipal',
   description: 'Plataforma integral de gestión estratégica y operativa para campañas municipales hacia mayo de 2027.',
+};
+
+export const viewport: Viewport = {
   colorScheme: 'light',
 };
 
