@@ -83,6 +83,9 @@ export const permissions = {
   // ¿Puede editar la configuración oficial de la campaña?
   canEditSettings: (role: UserRole) => ['ADMIN', 'CAMPAIGN_DIRECTOR'].includes(role),
 
+  // ¿Puede ver la infraestructura técnica y despliegue Dokploy?
+  canViewDevOps: (role: UserRole) => role === 'ADMIN',
+
   // ¿Es un rol de solo lectura (observador)?
   isReadOnly: (role: UserRole) => role === 'GLOBAL_SUPERVISOR',
 };

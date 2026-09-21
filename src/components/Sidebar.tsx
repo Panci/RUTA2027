@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import RoleSwitcher from './RoleSwitcher';
+import { permissions, UserRole } from '@/lib/permissions';
 import {
   Calendar,
   Compass,
@@ -65,8 +66,24 @@ const navigationItems = [
   },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({
+  activeRole = 'CAMPAIGN_DIRECTOR',
+}: {
+  activeRole?: UserRole;
+}) {
   const pathname = usePathname();
+
+  const filteredGroups = navigationItems
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        if (item.href === '/dokploy') {
+          return permissions.canViewDevOps(activeRole);
+        }
+        return true;
+      }),
+    }))
+    .filter((group) => group.items.length > 0);
 
   return (
     <aside className="w-64 bg-slate-900 text-slate-200 min-h-screen flex flex-col border-r border-slate-800 shrink-0 print:hidden">
@@ -88,7 +105,7 @@ export default function Sidebar() {
 
       {/* Navigation Links */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-5 text-sm">
-        {navigationItems.map((group, gIdx) => (
+        {filteredGroups.map((group, gIdx) => (
           <div key={gIdx} className="space-y-1">
             <h2 className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
               {group.group}
@@ -119,7 +136,7 @@ export default function Sidebar() {
 
       {/* Footer / Active Role Switcher */}
       <div className="p-3 border-t border-slate-800 bg-slate-950/50">
-        <RoleSwitcher />
+        <RoleSwitcher initialRole={activeRole} />
       </div>
     </aside>
   );

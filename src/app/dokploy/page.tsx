@@ -1,10 +1,44 @@
 import React from 'react';
-import { Server, ShieldCheck, Database, Terminal, CheckCircle2, Copy, FileText, HardDrive } from 'lucide-react';
+import { Server, ShieldCheck, Database, Terminal, CheckCircle2, Copy, FileText, HardDrive, ShieldAlert, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { getActiveRole, permissions } from '@/lib/permissions-server';
 
 export const dynamic = 'force-dynamic';
 
-export default function DokployPage() {
+export default async function DokployPage() {
+  const activeRole = await getActiveRole();
+
+  if (!permissions.canViewDevOps(activeRole)) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center max-w-md w-full shadow-sm space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mx-auto border border-red-100">
+            <ShieldAlert className="w-7 h-7" />
+          </div>
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-red-600 bg-red-50 px-2.5 py-1 rounded-full border border-red-100">
+              Acceso Restringido
+            </span>
+            <h2 className="text-lg font-bold text-slate-900 mt-2">
+              Exclusivo para el Administrador General
+            </h2>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              La consola técnica de despliegue en VPS Dokploy, gestión de contenedores Docker y acceso a base de datos PostgreSQL solo está disponible para el perfil de <strong>Administrador Global</strong>.
+            </p>
+          </div>
+          <div className="pt-2">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition shadow-xs"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Volver al Panel Principal
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="space-y-6">
       {/* Header */}
