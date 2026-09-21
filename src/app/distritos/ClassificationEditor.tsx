@@ -64,10 +64,10 @@ export default function ClassificationEditor({
         value={current}
         onChange={(e) => handleChange(e.target.value)}
         disabled={isSaving}
-        className="text-xs p-1 rounded border border-slate-300 bg-white font-medium focus:outline-none focus:ring-1 focus:ring-red-500"
+        className="text-xs p-1 rounded border border-slate-300 bg-white font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-red-500"
       >
         {CLASSIFICATIONS.map((opt) => (
-          <option key={opt.value} value={opt.value}>
+          <option key={opt.value} value={opt.value} className="text-slate-900 bg-white">
             {opt.label}
           </option>
         ))}

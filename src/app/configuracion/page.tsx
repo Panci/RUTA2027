@@ -80,11 +80,11 @@ export default async function ConfiguracionPage() {
               disabled
               className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg font-bold text-emerald-800"
             >
-              <option value="GANAR">Ganar las elecciones</option>
-              <option value="GOBERNAR">Gobernar</option>
-              <option value="REPRESENTACION">Obtener representación</option>
-              <option value="FORMAR_GOBIERNO">Formar parte del gobierno</option>
-              <option value="POSICIONAMIENTO">Posicionarse para siguientes elecciones</option>
+              <option value="GANAR" className="text-slate-900 bg-white">Ganar las elecciones</option>
+              <option value="GOBERNAR" className="text-slate-900 bg-white">Gobernar</option>
+              <option value="REPRESENTACION" className="text-slate-900 bg-white">Obtener representación</option>
+              <option value="FORMAR_GOBIERNO" className="text-slate-900 bg-white">Formar parte del gobierno</option>
+              <option value="POSICIONAMIENTO" className="text-slate-900 bg-white">Posicionarse para siguientes elecciones</option>
             </select>
           </div>
 

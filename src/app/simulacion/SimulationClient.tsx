@@ -283,7 +283,7 @@ export default function SimulationClient({ initialParties }: { initialParties: S
                         disabled={!p.active}
                         value={p.currentVotes}
                         onChange={(e) => handleVoteChange(p.id, parseInt(e.target.value, 10))}
-                        className="w-20 p-1 text-right text-xs font-bold border border-slate-300 rounded bg-white"
+                        className="w-20 p-1 text-right text-xs font-bold border border-slate-300 rounded bg-white text-slate-900"
                       />
                     </div>
                   </div>

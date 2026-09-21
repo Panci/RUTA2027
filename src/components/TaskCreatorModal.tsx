@@ -103,13 +103,13 @@ export default function TaskCreatorModal({
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-medium"
+                    className="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500"
                   >
-                    <option value="TASK">Tarea Operativa</option>
-                    <option value="VISIT">Visita Vecinal / Barrio</option>
-                    <option value="EVENT">Acto Público / Carpa</option>
-                    <option value="MEETING">Reunión Sectorial</option>
-                    <option value="MEDIA">Medios / Publicación</option>
+                    <option value="TASK" className="text-slate-900 bg-white">Tarea Operativa</option>
+                    <option value="VISIT" className="text-slate-900 bg-white">Visita Vecinal / Barrio</option>
+                    <option value="EVENT" className="text-slate-900 bg-white">Acto Público / Carpa</option>
+                    <option value="MEETING" className="text-slate-900 bg-white">Reunión Sectorial</option>
+                    <option value="MEDIA" className="text-slate-900 bg-white">Medios / Publicación</option>
                   </select>
                 </div>
 
@@ -120,9 +120,8 @@ export default function TaskCreatorModal({
                     required
                     value={formData.dueDate}
                     onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                    className="w-full p-2.5 rounded-lg border border-slate-300 font-medium"
-                  >
-                  </input>
+                    className="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
                 </div>
               </div>
 
@@ -132,11 +131,11 @@ export default function TaskCreatorModal({
                   <select
                     value={formData.districtId}
                     onChange={(e) => setFormData({ ...formData, districtId: e.target.value })}
-                    className="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-medium"
+                    className="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500"
                   >
-                    <option value="">Ámbito Municipal General</option>
+                    <option value="" className="text-slate-900 bg-white">Ámbito Municipal General</option>
                     {districts.map((d) => (
-                      <option key={d.id} value={d.id}>
+                      <option key={d.id} value={d.id} className="text-slate-900 bg-white">
                         {d.name}
                       </option>
                     ))}
@@ -148,11 +147,11 @@ export default function TaskCreatorModal({
                   <select
                     value={formData.priorityId}
                     onChange={(e) => setFormData({ ...formData, priorityId: e.target.value })}
-                    className="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-medium"
+                    className="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-red-500"
                   >
-                    <option value="">Sin prioridad asignada</option>
+                    <option value="" className="text-slate-900 bg-white">Sin prioridad asignada</option>
                     {priorities.map((p) => (
-                      <option key={p.id} value={p.id}>
+                      <option key={p.id} value={p.id} className="text-slate-900 bg-white">
                         P{p.orderNumber}: {p.title.slice(0, 25)}...
                       </option>
                     ))}
@@ -167,7 +166,7 @@ export default function TaskCreatorModal({
                   placeholder="Ej: Familias jóvenes, pensionistas, comerciantes..."
                   value={formData.targetAudience}
                   onChange={(e) => setFormData({ ...formData, targetAudience: e.target.value })}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 text-slate-800"
+                  className="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
               </div>
 
@@ -178,7 +177,7 @@ export default function TaskCreatorModal({
                   placeholder="Ej: Inversión garantizada en limpieza e iluminación"
                   value={formData.keyMessage}
                   onChange={(e) => setFormData({ ...formData, keyMessage: e.target.value })}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 text-slate-800"
+                  className="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
               </div>
 
@@ -189,7 +188,7 @@ export default function TaskCreatorModal({
                   placeholder="Detalles sobre qué se busca conseguir..."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 text-slate-800"
+                  className="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
               </div>
 
