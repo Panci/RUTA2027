@@ -1,6 +1,7 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
 import { getActiveCampaign } from '@/lib/campaign-context';
+import { getActiveRole, permissions } from '@/lib/permissions-server';
 import TaskCreatorModal from '@/components/TaskCreatorModal';
 import TaskStatusToggle from '@/components/TaskStatusToggle';
 import { Megaphone, MapPin, Target, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
@@ -8,6 +9,10 @@ import { Megaphone, MapPin, Target, CheckCircle2, Clock, AlertCircle } from 'luc
 export const dynamic = 'force-dynamic';
 
 export default async function ActosPage() {
+  const activeRole = await getActiveRole();
+  const canCreate = permissions.canCreateTasks(activeRole);
+  const canChangeStatus = permissions.canChangeTaskStatus(activeRole);
+
   const campaign = await getActiveCampaign({
     include: {
       districts: true,
@@ -46,6 +51,7 @@ export default async function ActosPage() {
         <TaskCreatorModal
           districts={campaign.districts.map((d) => ({ id: d.id, name: d.name }))}
           priorities={campaign.priorities.map((p) => ({ id: p.id, orderNumber: p.orderNumber, title: p.title }))}
+          readOnly={!canCreate}
         />
       </div>
 
@@ -64,7 +70,7 @@ export default async function ActosPage() {
                 </p>
               </div>
 
-              <TaskStatusToggle taskId={act.id} initialStatus={act.status} />
+              <TaskStatusToggle taskId={act.id} initialStatus={act.status} disabled={!canChangeStatus} />
             </div>
 
             <div className="space-y-2 text-xs">

@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import RoleSwitcher from './RoleSwitcher';
 import {
   Calendar,
   Compass,
@@ -116,15 +117,9 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Footer / Active Role Indicator */}
+      {/* Footer / Active Role Switcher */}
       <div className="p-3 border-t border-slate-800 bg-slate-950/50">
-        <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-slate-800/80 border border-slate-700/50">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <div className="text-xs">
-            <p className="font-medium text-slate-200 leading-none">Comité de Dirección</p>
-            <p className="text-[11px] text-slate-400">Rol: Director de Campaña</p>
-          </div>
-        </div>
+        <RoleSwitcher />
       </div>
     </aside>
   );

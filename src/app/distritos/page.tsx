@@ -1,6 +1,7 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
 import { getActiveCampaign } from '@/lib/campaign-context';
+import { getActiveRole, permissions } from '@/lib/permissions-server';
 import ClassificationEditor from './ClassificationEditor';
 import DistrictCharts from './DistrictCharts';
 import { MapPin, TrendingUp, ShieldAlert, Award, ArrowUpRight, ArrowDownRight } from 'lucide-react';
@@ -8,6 +9,9 @@ import { MapPin, TrendingUp, ShieldAlert, Award, ArrowUpRight, ArrowDownRight } 
 export const dynamic = 'force-dynamic';
 
 export default async function DistritosPage() {
+  const activeRole = await getActiveRole();
+  const canClassify = permissions.canClassifyDistricts(activeRole);
+
   const campaign = await getActiveCampaign({
     include: {
       parties: true,
@@ -183,7 +187,7 @@ export default async function DistritosPage() {
                     </td>
 
                     <td className="p-4">
-                      <ClassificationEditor districtId={d.id} initialClassification={d.classification} />
+                      <ClassificationEditor districtId={d.id} initialClassification={d.classification} disabled={!canClassify} />
                     </td>
                   </tr>
                 );

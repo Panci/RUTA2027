@@ -15,6 +15,7 @@ import {
   AlertCircle,
   X,
   ExternalLink,
+  Eye,
 } from 'lucide-react';
 
 interface CampaignCardData {
@@ -36,9 +37,11 @@ interface CampaignCardData {
 export default function MunicipiosClient({
   campaigns,
   activeId,
+  canManage = true,
 }: {
   campaigns: CampaignCardData[];
   activeId: string | null;
+  canManage?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -152,13 +155,20 @@ export default function MunicipiosClient({
             Administra de forma aislada y simultánea las campañas electorales de cada municipio con sus propios censos, distritos, rivales y agendas.
           </p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center justify-center gap-2 shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          Dar de Alta Nuevo Municipio
-        </button>
+        {canManage ? (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center justify-center gap-2 shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            Dar de Alta Nuevo Municipio
+          </button>
+        ) : (
+          <div className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 shrink-0">
+            <Eye className="w-4 h-4 text-blue-600" />
+            <span>Supervisión Global (Solo Lectura)</span>
+          </div>
+        )}
       </div>
 
       {/* Grid de Municipios */}
@@ -239,7 +249,7 @@ export default function MunicipiosClient({
                 </span>
 
                 <div className="flex items-center gap-1.5">
-                  {campaigns.length > 1 && (
+                  {canManage && campaigns.length > 1 && (
                     <button
                       onClick={() => handleDelete(c.id, c.municipality)}
                       className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition"

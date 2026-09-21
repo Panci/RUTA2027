@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
 import { ACTIVE_CAMPAIGN_COOKIE, getActiveCampaignId } from '@/lib/campaign-context';
+import { getActiveRole, permissions } from '@/lib/permissions-server';
 
 export async function GET() {
   try {
@@ -40,6 +41,14 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const activeRole = await getActiveRole();
+    if (!permissions.canManageMunicipalities(activeRole)) {
+      return NextResponse.json(
+        { error: 'No dispones de permisos para crear municipios con tu rol actual.' },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const {
       name,

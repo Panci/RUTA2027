@@ -7,15 +7,27 @@ import * as XLSX from 'xlsx';
 
 interface ImporterProps {
   onImportSuccess?: () => void;
+  readOnly?: boolean;
 }
 
-export default function ImporterClient({ onImportSuccess }: ImporterProps) {
+export default function ImporterClient({ onImportSuccess, readOnly = false }: ImporterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [fileData, setFileData] = useState<any[]>([]);
   const [fileName, setFileName] = useState<string>('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  if (readOnly) {
+    return (
+      <div className="bg-slate-100/80 border border-slate-200 rounded-xl p-4 text-xs text-slate-600 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <FileSpreadsheet className="w-4 h-4 text-blue-600" />
+          <span>Escrutinio histórico consolidado de 2023 disponible para consulta. <em>(Modo Solo Lectura activado)</em></span>
+        </div>
+      </div>
+    );
+  }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

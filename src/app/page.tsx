@@ -1,6 +1,7 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
 import { getActiveCampaign } from '@/lib/campaign-context';
+import { getActiveRole, permissions } from '@/lib/permissions-server';
 import Link from 'next/link';
 import TaskCreatorModal from '@/components/TaskCreatorModal';
 import TaskStatusToggle from '@/components/TaskStatusToggle';
@@ -63,6 +64,10 @@ export default async function EstaSemanaPage() {
   const eventsAndVisits = tasks.filter((t) => t.type === 'EVENT' || t.type === 'VISIT' || t.type === 'MEETING');
   const currentPhase = campaign.phases[0];
 
+  const activeRole = await getActiveRole();
+  const canCreate = permissions.canCreateTasks(activeRole);
+  const canChangeStatus = permissions.canChangeTaskStatus(activeRole);
+
   // Competidores recientes
   const competitorLogs = await prisma.competitorTracking.findMany({
     take: 3,
@@ -89,6 +94,7 @@ export default async function EstaSemanaPage() {
             <TaskCreatorModal
               districts={campaign.districts.map((d) => ({ id: d.id, name: d.name }))}
               priorities={campaign.priorities.map((p) => ({ id: p.id, orderNumber: p.orderNumber, title: p.title }))}
+              readOnly={!canCreate}
             />
           </div>
         </div>
@@ -173,7 +179,7 @@ export default async function EstaSemanaPage() {
                     <span className="text-xs font-medium text-slate-500 block">
                       {new Date(t.dueDate).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
                     </span>
-                    <TaskStatusToggle taskId={t.id} initialStatus={t.status} />
+                    <TaskStatusToggle taskId={t.id} initialStatus={t.status} disabled={!canChangeStatus} />
                   </div>
                 </div>
               ))}

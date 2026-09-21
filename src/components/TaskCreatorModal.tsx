@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, X, Check, Megaphone, Calendar, MapPin, Target } from 'lucide-react';
+import { Plus, X, Check, Megaphone, Calendar, MapPin, Target, Eye } from 'lucide-react';
 
 interface DistrictOption {
   id: string;
@@ -17,9 +17,11 @@ interface PriorityOption {
 export default function TaskCreatorModal({
   districts,
   priorities,
+  readOnly = false,
 }: {
   districts: DistrictOption[];
   priorities: PriorityOption[];
+  readOnly?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -60,13 +62,20 @@ export default function TaskCreatorModal({
 
   return (
     <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg shadow transition flex items-center gap-1.5"
-      >
-        <Plus className="w-4 h-4" />
-        Nueva Acción / Tarea
-      </button>
+      {readOnly ? (
+        <div className="px-3 py-2 bg-slate-800 text-slate-300 text-xs font-semibold rounded-lg border border-slate-700 flex items-center gap-1.5 shadow-xs">
+          <Eye className="w-3.5 h-3.5 text-blue-400" />
+          <span>Modo Solo Lectura</span>
+        </div>
+      ) : (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg shadow transition flex items-center gap-1.5"
+        >
+          <Plus className="w-4 h-4" />
+          Nueva Acción / Tarea
+        </button>
+      )}
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">

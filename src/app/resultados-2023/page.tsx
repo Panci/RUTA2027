@@ -1,12 +1,16 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
 import { getActiveCampaign } from '@/lib/campaign-context';
+import { getActiveRole, permissions } from '@/lib/permissions-server';
 import ImporterClient from './ImporterClient';
 import { FileSpreadsheet, AlertCircle, BarChart3, TrendingUp, Info } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Resultados2023Page() {
+  const activeRole = await getActiveRole();
+  const canImport = permissions.canImportResults(activeRole);
+
   const campaign = await getActiveCampaign({
     include: {
       districts: {
@@ -70,7 +74,7 @@ export default async function Resultados2023Page() {
       </div>
 
       {/* Componente de Importación CSV / Excel */}
-      <ImporterClient />
+      <ImporterClient readOnly={!canImport} />
 
       {/* Resumen Municipal Consolidado */}
       <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">

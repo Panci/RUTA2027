@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getActiveCampaignId } from '@/lib/campaign-context';
+import { getActiveRole, permissions } from '@/lib/permissions-server';
 
 export async function POST(request: Request) {
   try {
+    const activeRole = await getActiveRole();
+    if (!permissions.canCreateTasks(activeRole)) {
+      return NextResponse.json({ error: 'Tu rol actual no tiene permisos para crear acciones o tareas.' }, { status: 403 });
+    }
+
     const body = await request.json();
     const { title, description, districtId, priorityId, type, dueDate, targetAudience, keyMessage, competitorPartyId } = body;
 
@@ -54,6 +60,11 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    const activeRole = await getActiveRole();
+    if (!permissions.canChangeTaskStatus(activeRole)) {
+      return NextResponse.json({ error: 'Tu rol actual es de solo lectura y no puede cambiar estados.' }, { status: 403 });
+    }
+
     const body = await request.json();
     const { id, status } = body;
 

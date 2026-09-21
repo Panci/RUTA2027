@@ -6,9 +6,11 @@ import { CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 export default function TaskStatusToggle({
   taskId,
   initialStatus,
+  disabled = false,
 }: {
   taskId: string;
   initialStatus: string;
+  disabled?: boolean;
 }) {
   const [status, setStatus] = useState(initialStatus);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -20,6 +22,7 @@ export default function TaskStatusToggle({
   };
 
   const handleToggle = async () => {
+    if (disabled) return;
     const target = nextStatus();
     setIsUpdating(true);
     try {
@@ -43,13 +46,15 @@ export default function TaskStatusToggle({
       onClick={handleToggle}
       disabled={isUpdating}
       className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-full transition flex items-center gap-1 border ${
+        disabled ? 'cursor-default opacity-85' : 'cursor-pointer hover:opacity-80'
+      } ${
         status === 'COMPLETED'
-          ? 'bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200'
+          ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
           : status === 'IN_PROGRESS'
-          ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200'
-          : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+          ? 'bg-amber-100 text-amber-800 border-amber-300'
+          : 'bg-slate-100 text-slate-700 border-slate-300'
       }`}
-      title="Haz clic para cambiar estado (Pendiente → En curso → Completada)"
+      title={disabled ? 'Modo Solo Lectura (Supervisor)' : 'Haz clic para cambiar estado (Pendiente → En curso → Completada)'}
     >
       {status === 'COMPLETED' ? (
         <CheckCircle2 className="w-3 h-3 text-emerald-600" />

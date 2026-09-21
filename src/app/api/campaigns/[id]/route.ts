@@ -2,12 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
 import { ACTIVE_CAMPAIGN_COOKIE, getActiveCampaignId } from '@/lib/campaign-context';
+import { getActiveRole, permissions } from '@/lib/permissions-server';
 
 export async function DELETE(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const activeRole = await getActiveRole();
+    if (!permissions.canManageMunicipalities(activeRole)) {
+      return NextResponse.json(
+        { error: 'No dispones de permisos para eliminar municipios con tu rol actual.' },
+        { status: 403 }
+      );
+    }
+
     const campaignId = params.id;
 
     const totalCampaigns = await prisma.campaign.count();
@@ -58,6 +67,14 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const activeRole = await getActiveRole();
+    if (!permissions.canEditSettings(activeRole)) {
+      return NextResponse.json(
+        { error: 'No dispones de permisos para modificar la configuración de municipios.' },
+        { status: 403 }
+      );
+    }
+
     const campaignId = params.id;
     const body = await req.json();
 

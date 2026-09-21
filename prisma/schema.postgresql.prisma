@@ -13,7 +13,9 @@ model User {
   name         String
   email        String       @unique
   passwordHash String
-  role         String       @default("VOLUNTEER") // ADMIN, CAMPAIGN_DIRECTOR, CANDIDATE, COMM_LEAD, DISTRICT_LEAD, VOLUNTEER
+  role         String       @default("VOLUNTEER") // ADMIN, GLOBAL_SUPERVISOR, CAMPAIGN_DIRECTOR, CANDIDATE, COMM_LEAD, DISTRICT_LEAD, VOLUNTEER
+  campaignId   String?
+  campaign     Campaign?    @relation(fields: [campaignId], references: [id], onDelete: SetNull)
   districtId   String?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
@@ -53,6 +55,7 @@ model Campaign {
   weeklyReports       WeeklyReport[]
   simulations         SimulationScenario[]
   auditLogs           AuditLog[]
+  users               User[]
 }
 
 // 3. Organización Territorial por Distritos

@@ -16,24 +16,27 @@ const CLASSIFICATIONS = [
 export default function ClassificationEditor({
   districtId,
   initialClassification,
+  disabled = false,
 }: {
   districtId: string;
   initialClassification: string;
+  disabled?: boolean;
 }) {
   const [current, setCurrent] = useState(initialClassification);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleChange = async (newVal: string) => {
+  const handleChange = async (val: string) => {
+    if (disabled) return;
     setIsSaving(true);
     try {
       const res = await fetch('/api/district-classification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ districtId, classification: newVal }),
+        body: JSON.stringify({ districtId, classification: val }),
       });
       if (res.ok) {
-        setCurrent(newVal);
+        setCurrent(val);
         setIsEditing(false);
       }
     } catch (e) {
@@ -45,15 +48,19 @@ export default function ClassificationEditor({
 
   const currentOption = CLASSIFICATIONS.find((c) => c.value === current) || CLASSIFICATIONS[4];
 
-  if (!isEditing) {
+  if (disabled || !isEditing) {
     return (
       <button
-        onClick={() => setIsEditing(true)}
-        className={`text-xs px-2.5 py-1 rounded-full font-bold border flex items-center gap-1.5 transition hover:opacity-80 ${currentOption.color}`}
-        title="Haz clic para modificar la clasificación estratégica"
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setIsEditing(true)}
+        className={`text-xs px-2.5 py-1 rounded-full font-bold border flex items-center gap-1.5 transition ${currentOption.color} ${
+          disabled ? 'cursor-default' : 'cursor-pointer hover:opacity-80'
+        }`}
+        title={disabled ? 'Modo Solo Lectura (Supervisor)' : 'Haz clic para modificar la clasificación estratégica'}
       >
         <span>{currentOption.label}</span>
-        <Edit2 className="w-3 h-3 opacity-60" />
+        {!disabled && <Edit2 className="w-3 h-3 opacity-60" />}
       </button>
     );
   }

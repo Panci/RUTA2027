@@ -1,9 +1,18 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getActiveCampaign } from '@/lib/campaign-context';
+import { getActiveRole, permissions } from '@/lib/permissions-server';
 
 export async function POST(request: Request) {
   try {
+    const activeRole = await getActiveRole();
+    if (!permissions.canImportResults(activeRole)) {
+      return NextResponse.json(
+        { error: 'No dispones de permisos para importar resultados electorales con tu rol actual.' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { records } = body;
 
