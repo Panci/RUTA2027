@@ -181,7 +181,7 @@ export default function SimulationClient({ initialParties }: { initialParties: S
                 onChange={(e) => setTotalSeats(parseInt(e.target.value, 10))}
                 className="w-full accent-red-600"
               />
-              <span className="text-[11px] text-slate-400 block mt-0.5">Valle Real: 25 concejales (población entre 50k y 100k hab.)</span>
+              <span className="text-[11px] text-slate-400 block mt-0.5">Escala municipal legal según censo de población (art. 179 LOREG).</span>
             </div>
 
             <div>

@@ -1,12 +1,13 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
+import { getActiveCampaign } from '@/lib/campaign-context';
 import Link from 'next/link';
 import { ClipboardList, Calendar, CheckCircle2, AlertCircle, FileText, ArrowRight, Printer } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function SeguimientoPage() {
-  const campaign = await prisma.campaign.findFirst({
+  const campaign = await getActiveCampaign({
     include: {
       weeklyMeetings: {
         orderBy: { meetingDate: 'desc' },

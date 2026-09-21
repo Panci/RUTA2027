@@ -1,12 +1,13 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
+import { getActiveCampaign } from '@/lib/campaign-context';
 import MilestoneToggle from './MilestoneToggle';
 import { Milestone, Calendar } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HojaDeRutaPage() {
-  const campaign = await prisma.campaign.findFirst({
+  const campaign = await getActiveCampaign({
     include: {
       phases: {
         include: {

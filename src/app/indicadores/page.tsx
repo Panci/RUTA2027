@@ -1,11 +1,12 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
+import { getActiveCampaign } from '@/lib/campaign-context';
 import { BarChart3, CheckCircle2, Clock, MapPin, Target, ShieldAlert, Sparkles, AlertTriangle } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function IndicadoresPage() {
-  const campaign = await prisma.campaign.findFirst({
+  const campaign = await getActiveCampaign({
     include: {
       actionTasks: true,
       districts: {

@@ -1,12 +1,13 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
+import { getActiveCampaign } from '@/lib/campaign-context';
 import ImporterClient from './ImporterClient';
 import { FileSpreadsheet, AlertCircle, BarChart3, TrendingUp, Info } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Resultados2023Page() {
-  const campaign = await prisma.campaign.findFirst({
+  const campaign = await getActiveCampaign({
     include: {
       districts: {
         include: {
@@ -55,7 +56,7 @@ export default async function Resultados2023Page() {
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mt-1">Resultados Electorales Municipales 2023</h1>
         <p className="text-sm text-slate-500 mt-0.5">
-          Punto de partida electoral y diagnóstico territorial de Valle Real.
+          Punto de partida electoral y diagnóstico territorial de {campaign.municipality}.
         </p>
       </div>
 

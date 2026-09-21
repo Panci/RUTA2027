@@ -1,5 +1,6 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
+import { getActiveCampaign } from '@/lib/campaign-context';
 import Link from 'next/link';
 import { FileText, Printer, ArrowLeft, MapPin, CheckCircle2, Clock, Eye, Sparkles } from 'lucide-react';
 import PrintButton from './PrintButton';
@@ -7,7 +8,7 @@ import PrintButton from './PrintButton';
 export const dynamic = 'force-dynamic';
 
 export default async function InformePage() {
-  const campaign = await prisma.campaign.findFirst({
+  const campaign = await getActiveCampaign({
     include: {
       strategy: true,
       priorities: true,

@@ -1,11 +1,12 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
+import { getActiveCampaign } from '@/lib/campaign-context';
 import { MessageSquareQuote, ShieldCheck, HelpCircle, Database, BookOpen, MapPin } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function MensajesPage() {
-  const campaign = await prisma.campaign.findFirst({
+  const campaign = await getActiveCampaign({
     include: {
       messageBank: {
         include: { district: true },
@@ -31,7 +32,7 @@ export default async function MensajesPage() {
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mt-1">Banco de Mensajes y Argumentarios</h1>
         <p className="text-sm text-slate-500 mt-0.5">
-          Estructura de discurso, réplicas a ataques, preguntas frecuentes y datos contrastados de Valle Real.
+          Estructura de discurso, réplicas a ataques, preguntas frecuentes y datos contrastados de {campaign.municipality}.
         </p>
       </div>
 

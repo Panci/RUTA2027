@@ -53,3 +53,6 @@ Thumbs.db
 /backups/
 *.sql
 *.tar.gz
+
+*.tsbuildinfo
+

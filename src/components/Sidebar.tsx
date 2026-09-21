@@ -56,6 +56,7 @@ const navigationItems = [
   {
     group: 'Dirección y Control',
     items: [
+      { name: 'Municipios y Sedes', href: '/municipios', icon: MapPin },
       { name: 'Cuadro de Mando (KPIs)', href: '/indicadores', icon: BarChart3 },
       { name: 'Configuración Campaña', href: '/configuracion', icon: Settings },
       { name: 'Despliegue VPS Dokploy', href: '/dokploy', icon: Server },

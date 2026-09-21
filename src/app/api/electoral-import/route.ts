@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { getActiveCampaign } from '@/lib/campaign-context';
 
 export async function POST(request: Request) {
   try {
@@ -10,7 +11,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No se enviaron registros válidos' }, { status: 400 });
     }
 
-    const campaign = await prisma.campaign.findFirst({
+    const campaign = await getActiveCampaign({
       include: { districts: true, parties: true },
     });
 

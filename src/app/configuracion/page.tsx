@@ -1,11 +1,12 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
+import { getActiveCampaign } from '@/lib/campaign-context';
 import { Settings, Shield, Target, Calendar, Users, Wallet, Layers, AlertTriangle } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ConfiguracionPage() {
-  const campaign = await prisma.campaign.findFirst({
+  const campaign = await getActiveCampaign({
     include: {
       districts: true,
       parties: true,

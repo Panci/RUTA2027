@@ -1,5 +1,6 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
+import { getActiveCampaign } from '@/lib/campaign-context';
 import TaskCreatorModal from '@/components/TaskCreatorModal';
 import TaskStatusToggle from '@/components/TaskStatusToggle';
 import { Megaphone, MapPin, Target, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
@@ -7,7 +8,7 @@ import { Megaphone, MapPin, Target, CheckCircle2, Clock, AlertCircle } from 'luc
 export const dynamic = 'force-dynamic';
 
 export default async function ActosPage() {
-  const campaign = await prisma.campaign.findFirst({
+  const campaign = await getActiveCampaign({
     include: {
       districts: true,
       priorities: true,

@@ -1,5 +1,6 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
+import { getActiveCampaign } from '@/lib/campaign-context';
 import Link from 'next/link';
 import TaskCreatorModal from '@/components/TaskCreatorModal';
 import TaskStatusToggle from '@/components/TaskStatusToggle';
@@ -20,8 +21,8 @@ import {
 export const dynamic = 'force-dynamic';
 
 export default async function EstaSemanaPage() {
-  // Carga de datos operativos de la campaña
-  const campaign = await prisma.campaign.findFirst({
+  // Carga de datos operativos del municipio/campaña activo
+  const campaign = await getActiveCampaign({
     include: {
       strategy: true,
       priorities: {
@@ -78,7 +79,7 @@ export default async function EstaSemanaPage() {
             <span className="text-xs uppercase tracking-wider font-semibold text-red-400">
               Panel de Mando Operativo
             </span>
-            <h1 className="text-2xl font-bold mt-1">Esta Semana en Valle Real</h1>
+            <h1 className="text-2xl font-bold mt-1">Esta Semana en {campaign.municipality}</h1>
             <p className="text-slate-400 text-sm mt-0.5">
               Candidatura: <strong className="text-white">{campaign.candidacyName}</strong> | Objetivo:{' '}
               <span className="text-emerald-400 font-semibold">{campaign.politicalGoal}</span>

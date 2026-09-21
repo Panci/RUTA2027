@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { getActiveCampaignId } from '@/lib/campaign-context';
 
 export async function POST(request: Request) {
   try {
@@ -10,14 +11,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'El título y la fecha son obligatorios' }, { status: 400 });
     }
 
-    const campaign = await prisma.campaign.findFirst();
-    if (!campaign) {
+    const campaignId = await getActiveCampaignId();
+    if (!campaignId) {
       return NextResponse.json({ error: 'No existe campaña activa' }, { status: 400 });
     }
 
     const newTask = await prisma.actionTask.create({
       data: {
-        campaignId: campaign.id,
+        campaignId,
         title,
         description,
         districtId: districtId || null,
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
 
     await prisma.auditLog.create({
       data: {
-        campaignId: campaign.id,
+        campaignId,
         userName: 'Director de Campaña',
         action: 'CREATE',
         resource: 'Acciones / Tareas',

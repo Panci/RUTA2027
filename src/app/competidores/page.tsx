@@ -1,11 +1,16 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
+import { getActiveCampaign } from '@/lib/campaign-context';
 import { Eye, AlertCircle, TrendingUp, Sparkles, UserCheck, ShieldAlert } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function CompetidoresPage() {
+  const campaign = await getActiveCampaign();
+  const activeCampaignId = campaign?.id;
+
   const competitorLogs = await prisma.competitorTracking.findMany({
+    where: activeCampaignId ? { party: { campaignId: activeCampaignId } } : undefined,
     include: {
       party: true,
     },
@@ -23,7 +28,7 @@ export default async function CompetidoresPage() {
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mt-1">Radar y Seguimiento de Competidores</h1>
         <p className="text-sm text-slate-500 mt-0.5">
-          Monitorización de declaraciones, movimientos, errores públicos y ventanas de oportunidad en Valle Real.
+          Monitorización de declaraciones, movimientos, errores públicos y ventanas de oportunidad en {campaign?.municipality || 'el municipio'}.
         </p>
       </div>
 

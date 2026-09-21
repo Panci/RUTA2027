@@ -1,11 +1,12 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
+import { getActiveCampaign } from '@/lib/campaign-context';
 import { Compass, ShieldCheck, AlertTriangle, Lightbulb, Zap, Users, Wallet, Layers } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DiagnosticoPage() {
-  const campaign = await prisma.campaign.findFirst({
+  const campaign = await getActiveCampaign({
     include: {
       diagnostics: {
         include: { district: true },
@@ -31,7 +32,7 @@ export default async function DiagnosticoPage() {
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mt-1">Matriz DAFO Municipal y Territorial</h1>
         <p className="text-sm text-slate-500 mt-0.5">
-          Diagnóstico de situación política, problemas ciudadanos y capacidades reales del equipo de Valle Real.
+          Diagnóstico de situación política, problemas ciudadanos y capacidades reales del equipo de {campaign.municipality}.
         </p>
       </div>
 

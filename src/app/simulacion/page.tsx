@@ -1,11 +1,12 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
+import { getActiveCampaign } from '@/lib/campaign-context';
 import SimulationClient from './SimulationClient';
 
 export const dynamic = 'force-dynamic';
 
 export default async function SimulacionPage() {
-  const campaign = await prisma.campaign.findFirst({
+  const campaign = await getActiveCampaign({
     include: {
       parties: true,
     },
@@ -34,7 +35,7 @@ export default async function SimulacionPage() {
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mt-1">Simulador Electoral y Reparto D'Hondt</h1>
         <p className="text-sm text-slate-500 mt-0.5">
-          Modelado aritmético de reparto de concejales con barrera electoral legal (5%) en Valle Real.
+          Modelado aritmético de reparto de concejales con barrera electoral legal (5%) en {campaign.municipality}.
         </p>
       </div>
 

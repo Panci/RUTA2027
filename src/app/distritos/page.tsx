@@ -1,5 +1,6 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
+import { getActiveCampaign } from '@/lib/campaign-context';
 import ClassificationEditor from './ClassificationEditor';
 import DistrictCharts from './DistrictCharts';
 import { MapPin, TrendingUp, ShieldAlert, Award, ArrowUpRight, ArrowDownRight } from 'lucide-react';
@@ -7,7 +8,7 @@ import { MapPin, TrendingUp, ShieldAlert, Award, ArrowUpRight, ArrowDownRight } 
 export const dynamic = 'force-dynamic';
 
 export default async function DistritosPage() {
-  const campaign = await prisma.campaign.findFirst({
+  const campaign = await getActiveCampaign({
     include: {
       parties: true,
       districts: {
