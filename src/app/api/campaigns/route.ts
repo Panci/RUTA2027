@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
         startDate: new Date('2026-09-01'),
         endDate: new Date('2026-10-31'),
         status: 'IN_PROGRESS',
-        mainObjective: 'Censo de voluntariado, diagnóstico territorial por distrito y presupuesto.',
+        objectives: 'Censo de voluntariado, diagnóstico territorial por distrito y presupuesto.',
       },
       {
         phaseNumber: 2,
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
         startDate: new Date('2026-11-01'),
         endDate: new Date('2026-12-31'),
         status: 'PENDING',
-        mainObjective: 'Fijación de las 3 prioridades políticas y proclamación de candidatura.',
+        objectives: 'Fijación de las 3 prioridades políticas y proclamación de candidatura.',
       },
       {
         phaseNumber: 3,
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
         startDate: new Date('2027-01-01'),
         endDate: new Date('2027-02-28'),
         status: 'PENDING',
-        mainObjective: 'Ronda de reuniones sectoriales con comerciantes y colectivos vecinales.',
+        objectives: 'Ronda de reuniones sectoriales con comerciantes y colectivos vecinales.',
       },
       {
         phaseNumber: 4,
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
         startDate: new Date('2027-03-01'),
         endDate: new Date('2027-03-31'),
         status: 'PENDING',
-        mainObjective: 'Despliegue de carpas en distritos y captación de apoderados.',
+        objectives: 'Despliegue de carpas en distritos y captación de apoderados.',
       },
       {
         phaseNumber: 5,
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
         startDate: new Date('2027-04-01'),
         endDate: new Date('2027-04-30'),
         status: 'PENDING',
-        mainObjective: 'Acto central de presentación de lista electoral y compromisos irrenunciables.',
+        objectives: 'Acto central de presentación de lista electoral y compromisos irrenunciables.',
       },
       {
         phaseNumber: 6,
@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
         startDate: new Date('2027-05-01'),
         endDate: new Date('2027-05-21'),
         status: 'PENDING',
-        mainObjective: 'Movilización masiva de calle, puerta a puerta y actos finales.',
+        objectives: 'Movilización masiva de calle, puerta a puerta y actos finales.',
       },
       {
         phaseNumber: 7,
@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
         startDate: new Date('2027-05-22'),
         endDate: new Date('2027-05-31'),
         status: 'PENDING',
-        mainObjective: 'Cobertura de mesas electorales y análisis de resultados.',
+        objectives: 'Cobertura de mesas electorales y análisis de resultados.',
       },
     ];
 
