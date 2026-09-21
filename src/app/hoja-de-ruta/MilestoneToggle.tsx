@@ -7,15 +7,18 @@ export default function MilestoneToggle({
   milestoneId,
   initialCompleted,
   title,
+  readOnly = false,
 }: {
   milestoneId: string;
   initialCompleted: boolean;
   title: string;
+  readOnly?: boolean;
 }) {
   const [isCompleted, setIsCompleted] = useState(initialCompleted);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const handleToggle = async () => {
+    if (readOnly) return;
     const nextState = !isCompleted;
     setIsUpdating(true);
     try {
@@ -37,9 +40,11 @@ export default function MilestoneToggle({
   return (
     <button
       onClick={handleToggle}
-      disabled={isUpdating}
-      className="flex items-center gap-2 text-left hover:opacity-80 transition cursor-pointer"
-      title="Haz clic para marcar como completado/pendiente"
+      disabled={isUpdating || readOnly}
+      className={`flex items-center gap-2 text-left transition ${
+        readOnly ? 'cursor-default opacity-85' : 'hover:opacity-80 cursor-pointer'
+      }`}
+      title={readOnly ? 'Hito de campaña (Solo Lectura)' : 'Haz clic para marcar como completado/pendiente'}
     >
       {isCompleted ? (
         <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />

@@ -1,12 +1,16 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
 import { getActiveCampaign } from '@/lib/campaign-context';
+import { getActiveRole, permissions } from '@/lib/permissions-server';
 import MilestoneToggle from './MilestoneToggle';
 import { Milestone, Calendar } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HojaDeRutaPage() {
+  const activeRole = await getActiveRole();
+  const canChangeStatus = permissions.canChangeTaskStatus(activeRole);
+
   const campaign = await getActiveCampaign({
     include: {
       phases: {
@@ -115,6 +119,7 @@ export default async function HojaDeRutaPage() {
                             milestoneId={m.id}
                             initialCompleted={m.isCompleted}
                             title={m.title}
+                            readOnly={!canChangeStatus}
                           />
                           <span className="text-[11px] text-slate-500 font-medium shrink-0 ml-2">
                             {new Date(m.dueDate).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}

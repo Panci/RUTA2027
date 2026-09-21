@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Upload, AlertTriangle, CheckCircle, FileSpreadsheet, RefreshCw } from 'lucide-react';
+import { Upload, AlertTriangle, CheckCircle, FileSpreadsheet, RefreshCw, ShieldCheck } from 'lucide-react';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 
@@ -153,6 +153,17 @@ export default function ImporterClient({ onImportSuccess, readOnly = false }: Im
 
       {isOpen && (
         <div className="mt-5 pt-4 border-t border-slate-100 space-y-4">
+          {/* Advertencia Legal RGPD y LOREG */}
+          <div className="p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-start gap-2.5">
+            <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <span className="font-bold">Aviso de Cumplimiento Legal (RGPD y Art. 41.5 LOREG):</span>
+              <p className="text-[11px] text-blue-800 leading-relaxed">
+                Este importador está habilitado exclusivamente para el análisis estadístico agregado de resultados electorales y número global de censo por distrito. Queda <strong>estrictamente prohibida la carga de censos nominales</strong> con nombres, apellidos, DNI, direcciones o cualquier dato identificativo de electores.
+              </p>
+            </div>
+          </div>
+
           <div className="border-2 border-dashed border-slate-300 hover:border-red-500 transition rounded-xl p-6 text-center bg-slate-50/50">
             <input
               type="file"

@@ -29,15 +29,16 @@ export default async function InformePage() {
     },
   });
 
-  const competitorLogs = await prisma.competitorTracking.findMany({
-    take: 3,
-    include: { party: true },
-    orderBy: { date: 'desc' },
-  });
-
   if (!campaign) {
     return <div className="p-8 text-center text-slate-500">Campaña no disponible.</div>;
   }
+
+  const competitorLogs = await prisma.competitorTracking.findMany({
+    take: 3,
+    where: { party: { campaignId: campaign.id } },
+    include: { party: true },
+    orderBy: { date: 'desc' },
+  });
 
   const completed = campaign.actionTasks.filter((t) => t.status === 'COMPLETED');
   const pending = campaign.actionTasks.filter((t) => t.status !== 'COMPLETED');

@@ -27,6 +27,24 @@ async function main() {
   // 2. Usuarios del Equipo de Campaña
   const passwordHash = await bcrypt.hash('Demo2027!', 10);
 
+  const globalAdmin = await prisma.user.create({
+    data: {
+      name: 'Administrador General',
+      email: 'admin@campana.es',
+      passwordHash,
+      role: 'ADMIN',
+    },
+  });
+
+  const globalSupervisor = await prisma.user.create({
+    data: {
+      name: 'Supervisor General (Observador)',
+      email: 'supervisor@campana.es',
+      passwordHash,
+      role: 'GLOBAL_SUPERVISOR',
+    },
+  });
+
   const admin = await prisma.user.create({
     data: {
       name: 'Elena Ramos (Directora)',
@@ -63,7 +81,7 @@ async function main() {
     },
   });
 
-  console.log('👤 Usuarios creados');
+  console.log('👤 Usuarios creados (Admin, Supervisor, Directora, Candidato, etc.)');
 
   // 3. Proyecto de Campaña Municipal
   const campaign = await prisma.campaign.create({

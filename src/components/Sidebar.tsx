@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import RoleSwitcher from './RoleSwitcher';
 import { permissions, UserRole } from '@/lib/permissions';
+import { SessionUser } from '@/lib/auth';
 import {
   Calendar,
   Compass,
@@ -24,6 +25,7 @@ import {
   Settings,
   ShieldCheck,
   Printer,
+  LogOut,
 } from 'lucide-react';
 
 const navigationItems = [
@@ -68,10 +70,21 @@ const navigationItems = [
 
 export default function Sidebar({
   activeRole = 'CAMPAIGN_DIRECTOR',
+  user,
 }: {
   activeRole?: UserRole;
+  user?: SessionUser | null;
 }) {
   const pathname = usePathname();
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/login';
+    } catch {
+      window.location.href = '/login';
+    }
+  };
 
   const filteredGroups = navigationItems
     .map((group) => ({
@@ -134,9 +147,40 @@ export default function Sidebar({
         ))}
       </nav>
 
-      {/* Footer / Active Role Switcher */}
-      <div className="p-3 border-t border-slate-800 bg-slate-950/50">
+      {/* Footer / Active User & Role Switcher */}
+      <div className="p-3 border-t border-slate-800 bg-slate-950/70 space-y-2">
+        {user && (
+          <div className="flex items-center justify-between px-1 pb-1">
+            <div className="flex items-center gap-2 overflow-hidden">
+              <div className="w-7 h-7 rounded-full bg-red-950 border border-red-800 flex items-center justify-center text-xs font-bold text-red-300 shrink-0">
+                {user.name.slice(0, 1).toUpperCase()}
+              </div>
+              <div className="truncate">
+                <p className="text-xs font-bold text-slate-200 truncate">{user.name}</p>
+                <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded transition shrink-0"
+              title="Cerrar sesión de forma segura"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
         <RoleSwitcher initialRole={activeRole} />
+
+        <div className="flex items-center justify-center gap-2 pt-1 text-[10px] text-slate-400">
+          <Link href="/privacidad" className="hover:text-slate-200 transition">
+            Privacidad
+          </Link>
+          <span>•</span>
+          <Link href="/aviso-legal" className="hover:text-slate-200 transition">
+            Aviso Legal
+          </Link>
+        </div>
       </div>
     </aside>
   );

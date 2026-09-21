@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import Sidebar from '@/components/Sidebar';
 import Navbar from '@/components/Navbar';
-import { getActiveRole } from '@/lib/permissions-server';
+import { getActiveRole, getCurrentUser } from '@/lib/permissions-server';
 
 export const metadata: Metadata = {
   title: 'Ruta 2027 — Estrategia de Campaña Municipal',
@@ -18,12 +18,23 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const user = await getCurrentUser();
   const activeRole = await getActiveRole();
+
+  if (!user) {
+    return (
+      <html lang="es" className="light" style={{ colorScheme: 'light' }}>
+        <body className="min-h-screen bg-slate-900 text-slate-900 antialiased">
+          {children}
+        </body>
+      </html>
+    );
+  }
 
   return (
     <html lang="es" className="light" style={{ colorScheme: 'light' }}>
       <body className="flex min-h-screen bg-slate-50 text-slate-900 antialiased">
-        <Sidebar activeRole={activeRole} />
+        <Sidebar activeRole={activeRole} user={user} />
         <div className="flex-1 flex flex-col min-w-0">
           <Navbar />
           <main className="flex-1 p-6 md:p-8 overflow-y-auto max-w-7xl mx-auto w-full">

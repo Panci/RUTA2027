@@ -6,6 +6,9 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
 
+# En producción, preparar el esquema PostgreSQL para compilar Prisma Client
+RUN if [ -f "./prisma/schema.postgresql.prisma" ]; then cp ./prisma/schema.postgresql.prisma ./prisma/schema.prisma; fi
+
 RUN npm ci || npm install
 
 # Stage 2: Builder
@@ -15,7 +18,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma Client
+# Usar esquema PostgreSQL en imagen de producción
+RUN if [ -f "./prisma/schema.postgresql.prisma" ]; then cp ./prisma/schema.postgresql.prisma ./prisma/schema.prisma; fi
 RUN npx prisma generate
 
 # Build Next.js application in standalone mode
@@ -43,6 +47,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 
 USER nextjs
 
