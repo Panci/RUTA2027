@@ -2,7 +2,20 @@ import { cookies } from 'next/headers';
 import { UserRole } from './permissions';
 
 export const AUTH_SESSION_COOKIE = 'auth_session';
-const SESSION_SECRET = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || 'ruta2027-secret-key-security-audit-token-32b';
+
+function getSessionSecret(): string {
+  const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'CONFIGURACIÓN CRÍTICA REQUERIDA: NEXTAUTH_SECRET o AUTH_SECRET debe estar configurada en el entorno de producción.'
+      );
+    }
+    return 'ruta2027-secret-key-security-audit-token-32b';
+  }
+  return secret;
+}
+
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 días
 
 export interface SessionUser {
@@ -62,7 +75,7 @@ export async function createSessionToken(user: Omit<SessionUser, 'exp'>): Promis
   const exp = Math.floor(Date.now() / 1000) + SESSION_MAX_AGE;
   const payload: SessionUser = { ...user, exp };
   const encodedPayload = base64UrlEncode(JSON.stringify(payload));
-  const signature = await sign(encodedPayload, SESSION_SECRET);
+  const signature = await sign(encodedPayload, getSessionSecret());
   return `${encodedPayload}.${signature}`;
 }
 
@@ -75,7 +88,7 @@ export async function verifySessionToken(token?: string | null): Promise<Session
   if (parts.length !== 2) return null;
 
   const [encodedPayload, signature] = parts;
-  const isValid = await verify(encodedPayload, signature, SESSION_SECRET);
+  const isValid = await verify(encodedPayload, signature, getSessionSecret());
   if (!isValid) return null;
 
   try {

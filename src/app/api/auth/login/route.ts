@@ -23,15 +23,12 @@ export async function POST(req: NextRequest) {
       where: { email: normalizedEmail },
     });
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Credenciales incorrectas o usuario no registrado.' },
-        { status: 401 }
-      );
-    }
+    // Hash dummy constante para mitigar ataques de temporización (timing attacks)
+    const DUMMY_BCRYPT_HASH = '$2a$10$7EqJtq98hPqEX7fNZaFWoO.8/k.Y9x7V1sZ9gQv0uO7yTq9tP1r6W';
+    const hashToCompare = user ? user.passwordHash : DUMMY_BCRYPT_HASH;
+    const isMatch = await bcrypt.compare(password, hashToCompare);
 
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!isMatch) {
+    if (!user || !isMatch) {
       return NextResponse.json(
         { error: 'Credenciales incorrectas o usuario no registrado.' },
         { status: 401 }
