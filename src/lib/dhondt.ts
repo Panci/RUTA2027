@@ -30,6 +30,7 @@ export interface DhondtCalculationResult {
   thresholdVotes: number;
   totalSeats: number;
   thresholdPercent: number;
+  hasTechnicalTie: boolean;
   results: DhondtResult[];
   quotientTable: {
     round: number;
@@ -76,6 +77,8 @@ export function calculateDhondt(
     assignedSeatNumber: number;
   }[] = [];
 
+  let hasTechnicalTie = false;
+
   // Algoritmo D'Hondt iterativo
   if (eligibleParties.length > 0 && totalSeats > 0) {
     for (let seatNum = 1; seatNum <= totalSeats; seatNum++) {
@@ -90,9 +93,12 @@ export function calculateDhondt(
           maxQuotient = quotient;
           winningParty = party;
         } else if (quotient === maxQuotient && winningParty) {
-          // En caso de empate técnico de cocientes, desempata la candidatura con mayor número total de votos
+          // LOREG Art. 163.1.c: Ante igualdad de cociente, se atribuye a la candidatura con más votos totales
           if (party.votes > winningParty.votes) {
             winningParty = party;
+          } else if (party.votes === winningParty.votes) {
+            // Empate estricto en cocientes y votos totales: la normativa electoral estipula resolución por sorteo
+            hasTechnicalTie = true;
           }
         }
       }
@@ -136,6 +142,7 @@ export function calculateDhondt(
     thresholdVotes: Math.round(thresholdVotes),
     totalSeats,
     thresholdPercent,
+    hasTechnicalTie,
     results,
     quotientTable: quotientHistory,
   };

@@ -41,19 +41,19 @@ export async function getActiveCampaignId(): Promise<string | null> {
 /**
  * Obtiene los datos completos de la campaña activa según las opciones (include, select) especificadas.
  */
-export async function getActiveCampaign<T extends Prisma.CampaignFindFirstArgs>(
-  options?: Prisma.SelectSubset<T, Prisma.CampaignFindFirstArgs>
-): Promise<Prisma.CampaignGetPayload<T> | null> {
+export async function getActiveCampaign<T extends Omit<Prisma.CampaignFindUniqueArgs, 'where'>>(
+  options?: Prisma.SelectSubset<T, Omit<Prisma.CampaignFindUniqueArgs, 'where'>>
+): Promise<Prisma.CampaignGetPayload<{ where: { id: string } } & T> | null> {
   const activeId = await getActiveCampaignId();
 
   if (!activeId) {
     return null;
   }
 
-  return prisma.campaign.findUnique({
+  return (await prisma.campaign.findUnique({
     where: { id: activeId },
     ...(options as any),
-  }) as any;
+  })) as Prisma.CampaignGetPayload<{ where: { id: string } } & T> | null;
 }
 
 /**

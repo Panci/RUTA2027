@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { getActiveRole, permissions } from '@/lib/permissions-server';
 import { getSession } from '@/lib/auth';
 import { getActiveCampaignId } from '@/lib/campaign-context';
+import { DistrictClassificationSchema } from '@/lib/validations';
 
 export async function POST(request: Request) {
   try {
@@ -23,12 +24,15 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { districtId, classification } = body;
-
-    if (!districtId || !classification) {
-      return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 });
+    const parseResult = DistrictClassificationSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: parseResult.error.issues[0]?.message || 'Datos de clasificación no válidos.' },
+        { status: 400 }
+      );
     }
 
+    const { districtId, classification } = parseResult.data;
     const campaignId = await getActiveCampaignId();
 
     // Aislamiento multi-inquilino: verificar existencia y pertenencia a la campaña activa

@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { getActiveCampaignId } from '@/lib/campaign-context';
 import { getActiveRole, permissions } from '@/lib/permissions-server';
 import { getSession } from '@/lib/auth';
+import { TaskCreateSchema, TaskUpdateStatusSchema } from '@/lib/validations';
 
 export async function POST(request: Request) {
   try {
@@ -23,11 +24,25 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { title, description, districtId, priorityId, type, dueDate, targetAudience, keyMessage, competitorPartyId } = body;
-
-    if (!title || !dueDate) {
-      return NextResponse.json({ error: 'El título y la fecha son obligatorios' }, { status: 400 });
+    const parseResult = TaskCreateSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: parseResult.error.issues[0]?.message || 'Datos de tarea no válidos.' },
+        { status: 400 }
+      );
     }
+
+    const {
+      title,
+      description,
+      districtId,
+      priorityId,
+      type,
+      dueDate,
+      targetAudience,
+      keyMessage,
+      competitorPartyId,
+    } = parseResult.data;
 
     const campaignId = await getActiveCampaignId();
     if (!campaignId) {
@@ -38,15 +53,15 @@ export async function POST(request: Request) {
       data: {
         campaignId,
         title,
-        description,
+        description: description || null,
         districtId: districtId || null,
         priorityId: priorityId || null,
         competitorPartyId: competitorPartyId || null,
         responsibleId: session.id,
-        type: type || 'TASK',
-        dueDate: new Date(dueDate),
-        targetAudience,
-        keyMessage,
+        type,
+        dueDate,
+        targetAudience: targetAudience || null,
+        keyMessage: keyMessage || null,
         status: 'PENDING',
       },
       include: {
@@ -70,7 +85,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('Error al crear tarea:', error);
     return NextResponse.json(
-      { error: 'Error interno al crear la tarea.' },
+      { error: 'Error interno al procesar la creación de la tarea.' },
       { status: 500 }
     );
   }
@@ -95,11 +110,15 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { id, status } = body;
-
-    if (!id || !status) {
-      return NextResponse.json({ error: 'ID y estado son requeridos' }, { status: 400 });
+    const parseResult = TaskUpdateStatusSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: parseResult.error.issues[0]?.message || 'Datos de actualización no válidos.' },
+        { status: 400 }
+      );
     }
+
+    const { id, status } = parseResult.data;
 
     const campaignId = await getActiveCampaignId();
     if (!campaignId) {

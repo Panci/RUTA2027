@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
 import { ACTIVE_CAMPAIGN_COOKIE, getActiveCampaignId } from '@/lib/campaign-context';
 import { getActiveRole, permissions } from '@/lib/permissions-server';
+import { getSession } from '@/lib/auth';
+import { CampaignCreateSchema } from '@/lib/validations';
 
 export async function GET() {
   try {
@@ -35,12 +37,23 @@ export async function GET() {
     });
   } catch (err: any) {
     console.error('Error al obtener municipios/campañas:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Error interno al obtener los municipios.' },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        { error: 'No autorizado. Se requiere iniciar sesión.' },
+        { status: 401 }
+      );
+    }
+
     const activeRole = await getActiveRole();
     if (!permissions.canManageMunicipalities(activeRole)) {
       return NextResponse.json(
@@ -50,8 +63,16 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+    const parseResult = CampaignCreateSchema.safeParse(body);
+
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: parseResult.error.issues[0]?.message || 'Datos de municipio o campaña no válidos.' },
+        { status: 400 }
+      );
+    }
+
     const {
-      name,
       municipality,
       candidacyName,
       partyOrCoalition,
@@ -60,26 +81,25 @@ export async function POST(req: NextRequest) {
       teamDescription,
       availableResources,
       mainAdversaries,
-    } = body;
-
-    if (!municipality || !candidacyName || !partyOrCoalition) {
-      return NextResponse.json(
-        { error: 'Los campos Municipio, Candidatura y Partido son obligatorios.' },
-        { status: 400 }
-      );
-    }
+      strengths,
+      weaknesses,
+      risks,
+    } = parseResult.data;
 
     const campaign = await prisma.campaign.create({
       data: {
-        name: name || `Campaña ${municipality} 2027`,
+        name: `Campaña ${municipality} 2027`,
         municipality,
         candidacyName,
         partyOrCoalition,
-        politicalGoal: politicalGoal || 'GANAR',
-        electionDate: electionDate ? new Date(electionDate) : new Date('2027-05-23T00:00:00.000Z'),
+        politicalGoal,
+        electionDate,
         teamDescription: teamDescription || null,
         availableResources: availableResources || null,
         mainAdversaries: mainAdversaries || null,
+        strengths: strengths || null,
+        weaknesses: weaknesses || null,
+        risks: risks || null,
       },
     });
 
@@ -99,43 +119,43 @@ export async function POST(req: NextRequest) {
         startDate: new Date('2026-11-01'),
         endDate: new Date('2026-12-31'),
         status: 'PENDING',
-        objectives: 'Fijación de las 3 prioridades políticas y proclamación de candidatura.',
+        objectives: 'Tres prioridades irrenunciables, banco de mensajes y argumentarios.',
       },
       {
         phaseNumber: 3,
-        name: 'Construcción de relación y presencia pública',
+        name: 'Relación y presencia pública',
         startDate: new Date('2027-01-01'),
         endDate: new Date('2027-02-28'),
         status: 'PENDING',
-        objectives: 'Ronda de reuniones sectoriales con comerciantes y colectivos vecinales.',
+        objectives: 'Reuniones sectoriales, actos en distritos prioritarios y presencia en medios.',
       },
       {
         phaseNumber: 4,
-        name: 'Activación del equipo y precampaña',
+        name: 'Activación del equipo',
         startDate: new Date('2027-03-01'),
         endDate: new Date('2027-03-31'),
         status: 'PENDING',
-        objectives: 'Despliegue de carpas en distritos y captación de apoderados.',
+        objectives: 'Formación de apoderados e interventores, movilización de colaboradores.',
       },
       {
         phaseNumber: 5,
-        name: 'Presentación del programa y candidatura',
+        name: 'Contacto ciudadano',
         startDate: new Date('2027-04-01'),
-        endDate: new Date('2027-04-30'),
+        endDate: new Date('2027-05-06'),
         status: 'PENDING',
-        objectives: 'Acto central de presentación de lista electoral y compromisos irrenunciables.',
+        objectives: 'Buzoneo, carpas informativas y visitas puerta a puerta.',
       },
       {
         phaseNumber: 6,
-        name: 'Campaña oficial',
-        startDate: new Date('2027-05-01'),
+        name: 'Campaña electoral oficial',
+        startDate: new Date('2027-05-07'),
         endDate: new Date('2027-05-21'),
         status: 'PENDING',
-        objectives: 'Movilización masiva de calle, puerta a puerta y actos finales.',
+        objectives: 'Disciplina de mensaje diario, actos centrales y movilización del voto indeciso.',
       },
       {
         phaseNumber: 7,
-        name: 'Día de elecciones y balance',
+        name: 'Tramo final y jornada electoral',
         startDate: new Date('2027-05-22'),
         endDate: new Date('2027-05-31'),
         status: 'PENDING',
@@ -152,11 +172,23 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Registrar en auditoría
+    await prisma.auditLog.create({
+      data: {
+        campaignId: campaign.id,
+        userId: session.id,
+        userName: session.name,
+        action: 'CREATE',
+        resource: 'Campaña Municipal',
+        details: `Nuevo municipio "${municipality}" creado por ${session.name} con candidatura "${candidacyName}"`,
+      },
+    });
+
     // Establecer la nueva campaña como la activa en la cookie
     cookies().set(ACTIVE_CAMPAIGN_COOKIE, campaign.id, {
       path: '/',
-      httpOnly: false, // Accesible por cliente si es necesario
-      maxAge: 60 * 60 * 24 * 365, // 1 año
+      httpOnly: false,
+      maxAge: 60 * 60 * 24 * 365,
     });
 
     return NextResponse.json({
@@ -165,6 +197,9 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: any) {
     console.error('Error al crear municipio/campaña:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Error interno al crear el municipio o campaña.' },
+      { status: 500 }
+    );
   }
 }

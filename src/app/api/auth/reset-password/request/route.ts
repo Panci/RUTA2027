@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import prisma from '@/lib/prisma';
+import { ResetPasswordRequestSchema } from '@/lib/validations';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email } = body;
+    const parseResult = ResetPasswordRequestSchema.safeParse(body);
 
-    if (!email || typeof email !== 'string') {
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: 'Debes proporcionar una dirección de correo válida.' },
+        { error: parseResult.error.issues[0]?.message || 'Dirección de correo no válida.' },
         { status: 400 }
       );
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const { email: normalizedEmail } = parseResult.data;
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
     });

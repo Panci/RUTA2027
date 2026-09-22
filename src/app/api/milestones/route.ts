@@ -39,6 +39,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ success: true, milestone: updated });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Error al actualizar hito:', error);
+    return NextResponse.json({ error: 'Error interno al actualizar el estado del hito.' }, { status: 500 });
   }
 }

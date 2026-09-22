@@ -1,27 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
+import { ResetPasswordConfirmSchema } from '@/lib/validations';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { token, newPassword } = body;
+    const parseResult = ResetPasswordConfirmSchema.safeParse(body);
 
-    if (!token || typeof token !== 'string') {
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: 'Token de restablecimiento no proporcionado o inválido.' },
+        { error: parseResult.error.issues[0]?.message || 'Datos de restablecimiento no válidos.' },
         { status: 400 }
       );
     }
 
-    if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
-      return NextResponse.json(
-        { error: 'La nueva contraseña debe tener como mínimo 8 caracteres.' },
-        { status: 400 }
-      );
-    }
+    const { token, newPassword } = parseResult.data;
 
     const resetRecord = await prisma.passwordResetToken.findUnique({
       where: { token },
@@ -77,7 +73,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Error confirming password reset:', error);
     return NextResponse.json(
-      { error: 'Error al actualizar la contraseña.' },
+      { error: 'Error interno al actualizar la contraseña.' },
       { status: 500 }
     );
   }

@@ -3,12 +3,21 @@ import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
 import { ACTIVE_CAMPAIGN_COOKIE, getActiveCampaignId } from '@/lib/campaign-context';
 import { getActiveRole, permissions } from '@/lib/permissions-server';
+import { getSession } from '@/lib/auth';
 
 export async function DELETE(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        { error: 'No autorizado. Se requiere iniciar sesión.' },
+        { status: 401 }
+      );
+    }
+
     const activeRole = await getActiveRole();
     if (!permissions.canManageMunicipalities(activeRole)) {
       return NextResponse.json(
@@ -35,6 +44,18 @@ export async function DELETE(
       return NextResponse.json({ error: 'Municipio no encontrado.' }, { status: 404 });
     }
 
+    // Registrar en auditoría antes de eliminar en cascada
+    await prisma.auditLog.create({
+      data: {
+        campaignId: null, // Ya que la campaña será eliminada en cascada
+        userId: session.id,
+        userName: session.name,
+        action: 'DELETE',
+        resource: 'Campaña Municipal',
+        details: `Campaña del municipio "${campaign.municipality}" eliminada por ${session.name}`,
+      },
+    });
+
     // Prisma ejecutará la eliminación en cascada de todos los datos asociados
     await prisma.campaign.delete({
       where: { id: campaignId },
@@ -58,7 +79,10 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error('Error al eliminar municipio:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Error interno al procesar la eliminación del municipio.' },
+      { status: 500 }
+    );
   }
 }
 
@@ -67,6 +91,14 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        { error: 'No autorizado. Se requiere iniciar sesión.' },
+        { status: 401 }
+      );
+    }
+
     const activeRole = await getActiveRole();
     if (!permissions.canEditSettings(activeRole)) {
       return NextResponse.json(
@@ -93,9 +125,23 @@ export async function PUT(
       },
     });
 
+    await prisma.auditLog.create({
+      data: {
+        campaignId,
+        userId: session.id,
+        userName: session.name,
+        action: 'UPDATE',
+        resource: 'Campaña Municipal',
+        details: `Parámetros del municipio "${updated.municipality}" actualizados por ${session.name}`,
+      },
+    });
+
     return NextResponse.json({ success: true, campaign: updated });
   } catch (err: any) {
     console.error('Error al actualizar municipio:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Error interno al actualizar la configuración del municipio.' },
+      { status: 500 }
+    );
   }
 }

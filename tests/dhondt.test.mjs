@@ -15,6 +15,8 @@ function calculateDhondt(parties, totalSeats, blankVotes = 0, thresholdPercent =
   const seatsMap = new Map();
   parties.forEach((p) => seatsMap.set(p.id, 0));
 
+  let hasTechnicalTie = false;
+
   for (let seatNum = 1; seatNum <= totalSeats; seatNum++) {
     let maxQuotient = -1;
     let winningParty = null;
@@ -26,6 +28,13 @@ function calculateDhondt(parties, totalSeats, blankVotes = 0, thresholdPercent =
       if (quotient > maxQuotient) {
         maxQuotient = quotient;
         winningParty = party;
+      } else if (quotient === maxQuotient && winningParty) {
+        // LOREG 163.1.c: mayor número total de votos
+        if (party.votes > winningParty.votes) {
+          winningParty = party;
+        } else if (party.votes === winningParty.votes) {
+          hasTechnicalTie = true;
+        }
       }
     }
 
@@ -37,6 +46,7 @@ function calculateDhondt(parties, totalSeats, blankVotes = 0, thresholdPercent =
   return {
     totalValidVotes,
     thresholdVotes,
+    hasTechnicalTie,
     eligibleCount: eligibleParties.length,
     seats: Object.fromEntries(seatsMap),
   };
@@ -83,3 +93,20 @@ test('Ley D\'Hondt: Respeto estricto del umbral del 5%', () => {
   const result = calculateDhondt(candidaturas, 11, 0, 5.0);
   assert.equal(result.seats['P3'], 0, 'La candidatura con < 5% no debe obtener escaños');
 });
+
+test('Ley D\'Hondt: Desempate conforme a LOREG Art. 163.1.c (votos totales)', () => {
+  // P1: 3000 votos, P2: 1500 votos. Con 2 concejales a repartir:
+  // Escaño 1: P1 (3000 / 1 = 3000) vs P2 (1500 / 1 = 1500) -> Se lo lleva P1 (1 escaño)
+  // Escaño 2: P1 (3000 / 2 = 1500) vs P2 (1500 / 1 = 1500) -> Empate en cociente 1500
+  // LOREG Art. 163.1.c: desempata a favor de P1 por tener mayor número total de votos (3000 > 1500)
+  const candidaturas = [
+    { id: 'P1', name: 'Partido Mayoritario', votes: 3000 },
+    { id: 'P2', name: 'Partido Minoritario', votes: 1500 },
+  ];
+
+  const result = calculateDhondt(candidaturas, 2, 0, 5.0);
+  assert.equal(result.seats['P1'], 2, 'P1 debe obtener el escaño empatado por mayor volumen de votos totales');
+  assert.equal(result.seats['P2'], 0);
+  assert.equal(result.hasTechnicalTie, false, 'No hay empate técnico irresoluble');
+});
+
