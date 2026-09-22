@@ -4,6 +4,7 @@ import { getActiveCampaign } from '@/lib/campaign-context';
 import Link from 'next/link';
 import { FileText, Printer, ArrowLeft, MapPin, CheckCircle2, Clock, Eye, Sparkles } from 'lucide-react';
 import PrintButton from './PrintButton';
+import ExportPdfButton from './ExportPdfButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,11 +55,17 @@ export default async function InformePage() {
           <ArrowLeft className="w-4 h-4" />
           Volver a Seguimiento
         </Link>
-        <PrintButton />
+        <div className="flex items-center gap-2">
+          <ExportPdfButton
+            elementId="informe-ejecutivo-content"
+            fileName={`Informe_Semanal_Ruta2027_${campaign.municipality.replace(/\s+/g, '_')}.pdf`}
+          />
+          <PrintButton />
+        </div>
       </div>
 
-      {/* Documento Ejecutivo Imprimible */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm print:border-none print:shadow-none print:p-0 space-y-6">
+      {/* Documento Ejecutivo Imprimible y Exportable */}
+      <div id="informe-ejecutivo-content" className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm print:border-none print:shadow-none print:p-0 space-y-6">
         {/* Cabecera Oficial */}
         <div className="border-b-2 border-slate-900 pb-4 flex justify-between items-start">
           <div>

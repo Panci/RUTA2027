@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Shield, Lock, Mail, AlertCircle, ArrowRight, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
@@ -100,9 +101,17 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Contraseña
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-slate-700">
+                  Contraseña
+                </label>
+                <Link
+                  href="/recuperar-contrasena"
+                  className="text-[11px] text-red-600 hover:text-red-700 font-semibold transition"
+                >
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </div>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}

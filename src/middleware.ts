@@ -4,8 +4,10 @@ import { AUTH_SESSION_COOKIE, verifySessionToken } from '@/lib/auth';
 // Rutas públicas que no requieren autenticación
 const PUBLIC_PATHS = [
   '/login',
+  '/recuperar-contrasena',
   '/api/auth/login',
   '/api/auth/logout',
+  '/api/auth/reset-password',
   '/api/health',
   '/privacidad',
   '/aviso-legal',

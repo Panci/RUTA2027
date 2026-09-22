@@ -23,6 +23,7 @@ model User {
   assignedTasks ActionTask[]
   milestones    Milestone[]
   auditLogs     AuditLog[]
+  resetTokens   PasswordResetToken[]
 }
 
 // 2. Configuración General de Campaña
@@ -342,4 +343,14 @@ model AuditLog {
   resource   String   // Tareas, Distritos, Partidos, etc.
   details    String
   timestamp  DateTime @default(now())
+}
+
+// 18. Tokens de Restablecimiento de Contraseña
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
