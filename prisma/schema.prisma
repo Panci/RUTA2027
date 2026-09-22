@@ -138,6 +138,7 @@ model ElectionResult2023 {
   updatedAt   DateTime @updatedAt
 
   @@unique([districtId, partyId])
+  @@index([partyId])
 }
 
 // 6. Diagnóstico Estratégico (Matriz DAFO Municipal y por Distrito)
@@ -157,6 +158,9 @@ model StrategicDiagnostic {
   availableResources String?   // Recursos disponibles
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
+
+  @@index([campaignId])
+  @@index([districtId])
 }
 
 // 7. Estrategia Central: Objetivo, Público y Posicionamiento
@@ -225,6 +229,9 @@ model Milestone {
   isCompleted   Boolean      @default(false)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+
+  @@index([phaseId])
+  @@index([dueDate])
 }
 
 // 11. Acciones, Tareas, Actos y Visitas ("Esta Semana")
@@ -251,6 +258,11 @@ model ActionTask {
   nextStep          String?
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
+
+  @@index([campaignId, status])
+  @@index([districtId])
+  @@index([dueDate])
+  @@index([type])
 }
 
 // 12. Banco de Mensajes y Argumentarios
@@ -279,6 +291,9 @@ model CompetitorTracking {
   date                      DateTime @default(now())
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
+
+  @@index([partyId])
+  @@index([date])
 }
 
 // 14. Reuniones Semanales
@@ -343,6 +358,10 @@ model AuditLog {
   resource   String   // Tareas, Distritos, Partidos, etc.
   details    String
   timestamp  DateTime @default(now())
+
+  @@index([campaignId, timestamp])
+  @@index([action])
+  @@index([userId])
 }
 
 // 18. Tokens de Restablecimiento de Contraseña
@@ -353,4 +372,6 @@ model PasswordResetToken {
   token     String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
+
+  @@index([userId])
 }

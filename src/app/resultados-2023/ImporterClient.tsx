@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { Upload, AlertTriangle, CheckCircle, FileSpreadsheet, RefreshCw, ShieldCheck } from 'lucide-react';
 import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
 
 interface ImporterProps {
   onImportSuccess?: () => void;
@@ -41,8 +40,9 @@ export default function ImporterClient({ onImportSuccess, readOnly = false }: Im
 
     if (isExcel) {
       const reader = new FileReader();
-      reader.onload = (evt) => {
+      reader.onload = async (evt) => {
         try {
+          const XLSX = await import('xlsx');
           const bstr = evt.target?.result;
           const wb = XLSX.read(bstr, { type: 'binary' });
           const wsname = wb.SheetNames[0];
