@@ -31,15 +31,26 @@ export default async function Resultados2023Page() {
     return <div className="p-8 text-center text-slate-500">Campaña no disponible.</div>;
   }
 
-  // Agregación de votos municipales totales
+  // Agregación de votos municipales totales y datos de censo/urnas
   const partyTotals = new Map<string, { party: any; totalVotes: number }>();
   let grandTotalVotes = 0;
+  let municipalCensus = 0;
+  let municipalBlankVotes = 0;
+  let municipalNullVotes = 0;
+  let municipalTurnout = 0;
 
   campaign.parties.forEach((p) => {
     partyTotals.set(p.id, { party: p, totalVotes: 0 });
   });
 
   campaign.districts.forEach((d) => {
+    municipalCensus += d.electoralRoll || 0;
+    const firstRes = d.electionResults[0];
+    if (firstRes) {
+      municipalBlankVotes += firstRes.blankVotes || 0;
+      municipalNullVotes += firstRes.nullVotes || 0;
+      municipalTurnout += firstRes.turnout || 0;
+    }
     d.electionResults.forEach((res) => {
       grandTotalVotes += res.votes;
       const current = partyTotals.get(res.partyId);
@@ -49,6 +60,16 @@ export default async function Resultados2023Page() {
     });
   });
 
+  const municipalValidVotes = grandTotalVotes + municipalBlankVotes;
+  if (municipalTurnout === 0) {
+    municipalTurnout = municipalValidVotes + municipalNullVotes;
+  }
+  const municipalAbstention = Math.max(0, municipalCensus - municipalTurnout);
+  const turnoutPercent = municipalCensus > 0 ? (municipalTurnout / municipalCensus) * 100 : 0;
+  const abstentionPercent = municipalCensus > 0 ? (municipalAbstention / municipalCensus) * 100 : 0;
+  const blankPercent = municipalValidVotes > 0 ? (municipalBlankVotes / municipalValidVotes) * 100 : 0;
+  const nullPercent = municipalTurnout > 0 ? (municipalNullVotes / municipalTurnout) * 100 : 0;
+
   const municipalRanking = Array.from(partyTotals.values()).sort((a, b) => b.totalVotes - a.totalVotes);
 
   return (
@@ -56,11 +77,11 @@ export default async function Resultados2023Page() {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2">
-          <span className="text-xs uppercase tracking-wider font-semibold text-red-600">Línea Base Histórica</span>
+          <span className="text-xs uppercase tracking-wider font-semibold text-rose-600">Línea Base Histórica</span>
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mt-1">Resultados Electorales Municipales 2023</h1>
         <p className="text-sm text-slate-500 mt-0.5">
-          Punto de partida electoral y diagnóstico territorial de {campaign.municipality}.
+          Punto de partida electoral y diagnóstico territorial de {campaign.municipality} (Censo Oficial: {municipalCensus.toLocaleString()} electores).
         </p>
       </div>
 
@@ -77,15 +98,49 @@ export default async function Resultados2023Page() {
       <ImporterClient readOnly={!canImport} />
 
       {/* Resumen Municipal Consolidado */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-2">
           <div className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-slate-700" />
+            <BarChart3 className="w-5 h-5 text-rose-500" />
             <h2 className="font-bold text-slate-800 text-base">Escrutinio Municipal Consolidado 2023</h2>
           </div>
           <span className="text-xs text-slate-500 font-medium">
-            Total votos contabilizados: <strong>{grandTotalVotes.toLocaleString()}</strong>
+            Total votos a candidaturas: <strong>{grandTotalVotes.toLocaleString()}</strong>
           </span>
+        </div>
+
+        {/* Panel de Censo, Participación, Abstención, Blancos y Nulos */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 pt-1 pb-1">
+          <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/80 text-xs space-y-1">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">Censo Total</span>
+            <span className="text-xl font-black text-slate-900 block">{municipalCensus.toLocaleString()}</span>
+            <span className="text-[11px] text-slate-400">Electores inscritos</span>
+          </div>
+          <div className="p-3.5 bg-blue-50/70 rounded-2xl border border-blue-200/70 text-xs space-y-1">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-700 block">Participación</span>
+            <span className="text-xl font-black text-blue-950 block">{municipalTurnout.toLocaleString()}</span>
+            <span className="text-[11px] text-blue-700 font-bold">{turnoutPercent.toFixed(1)}% en urnas</span>
+          </div>
+          <div className="p-3.5 bg-amber-50/70 rounded-2xl border border-amber-200/70 text-xs space-y-1">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 block">Abstención</span>
+            <span className="text-xl font-black text-amber-950 block">{municipalAbstention.toLocaleString()}</span>
+            <span className="text-[11px] text-amber-700 font-bold">{abstentionPercent.toFixed(1)}% abstención</span>
+          </div>
+          <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/80 text-xs space-y-1">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">Votos Válidos</span>
+            <span className="text-xl font-black text-slate-900 block">{municipalValidVotes.toLocaleString()}</span>
+            <span className="text-[11px] text-slate-500">Candidaturas + Blancos</span>
+          </div>
+          <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/80 text-xs space-y-1">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">Votos Blancos</span>
+            <span className="text-xl font-black text-slate-900 block">{municipalBlankVotes.toLocaleString()}</span>
+            <span className="text-[11px] text-slate-500">{blankPercent.toFixed(1)}% de válidos</span>
+          </div>
+          <div className="p-3.5 bg-rose-50/70 rounded-2xl border border-rose-200/70 text-xs space-y-1">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-rose-700 block">Votos Nulos</span>
+            <span className="text-xl font-black text-rose-950 block">{municipalNullVotes.toLocaleString()}</span>
+            <span className="text-[11px] text-rose-700 font-bold">{nullPercent.toFixed(1)}% de urnas</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">

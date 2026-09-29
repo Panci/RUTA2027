@@ -12,17 +12,22 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-interface ChartDataPoint {
-  distrito: string;
-  AVANZA: number;
-  PP: number;
-  PSOE: number;
-  VOX: number;
+export interface DistrictChartParty {
+  acronym: string;
+  name?: string;
+  colorHex: string;
+  isOwnParty: boolean;
 }
 
-export default function DistrictCharts({ data }: { data: ChartDataPoint[] }) {
+export default function DistrictCharts({
+  data,
+  parties = [],
+}: {
+  data: Array<{ distrito: string; [key: string]: any }>;
+  parties?: DistrictChartParty[];
+}) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+    <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs space-y-3">
       <div className="flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
           <h3 className="font-bold text-slate-800 text-base">Comparativa Gráfica de Votos por Distrito</h3>
@@ -46,10 +51,15 @@ export default function DistrictCharts({ data }: { data: ChartDataPoint[] }) {
               }}
             />
             <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-            <Bar dataKey="AVANZA" name="Avanza (Propia)" fill="#16a34a" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="PP" name="PP" fill="#2563eb" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="PSOE" name="PSOE" fill="#dc2626" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="VOX" name="VOX" fill="#4ade80" radius={[4, 4, 0, 0]} />
+            {parties.map((p) => (
+              <Bar
+                key={p.acronym}
+                dataKey={p.acronym}
+                name={p.isOwnParty ? `${p.acronym} (Propia)` : p.acronym}
+                fill={p.colorHex}
+                radius={[4, 4, 0, 0]}
+              />
+            ))}
           </BarChart>
         </ResponsiveContainer>
       </div>

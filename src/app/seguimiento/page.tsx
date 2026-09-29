@@ -1,8 +1,10 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
 import { getActiveCampaign } from '@/lib/campaign-context';
+import { getActiveRole, permissions } from '@/lib/permissions-server';
 import Link from 'next/link';
 import { ClipboardList, Calendar, CheckCircle2, AlertCircle, FileText, ArrowRight, Printer } from 'lucide-react';
+import MeetingModal from '@/components/MeetingModal';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +24,8 @@ export default async function SeguimientoPage() {
     return <div className="p-8 text-center text-slate-500">Campaña no disponible.</div>;
   }
 
+  const activeRole = await getActiveRole();
+  const canManage = permissions.canManageMeetings(activeRole);
   const latestMeeting = campaign.weeklyMeetings[0];
 
   return (
@@ -40,28 +44,49 @@ export default async function SeguimientoPage() {
           </p>
         </div>
 
-        <Link
-          href="/informe"
-          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition shadow flex items-center gap-2"
-        >
-          <Printer className="w-4 h-4 text-emerald-400" />
-          Ver / Imprimir Informe Semanal Oficial
-        </Link>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <MeetingModal canManage={canManage} />
+
+          <Link
+            href="/informe"
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition shadow flex items-center gap-2"
+          >
+            <Printer className="w-4 h-4 text-emerald-400" />
+            Ver / Imprimir Informe Semanal Oficial
+          </Link>
+        </div>
       </div>
+
+      {/* Si no hay reuniones registradas */}
+      {!latestMeeting && (
+        <div className="bg-white rounded-xl border border-dashed border-slate-300 p-8 text-center space-y-3">
+          <Calendar className="w-10 h-10 text-slate-400 mx-auto" />
+          <h3 className="font-bold text-slate-700 text-sm">No hay reuniones de comité registradas</h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            Registra la primera reunión semanal para levantar el acta de acuerdos, bloqueos y riesgos detectados.
+          </p>
+          <div className="pt-2 flex justify-center">
+            <MeetingModal canManage={canManage} />
+          </div>
+        </div>
+      )}
 
       {/* Última Reunión de Comité */}
       {latestMeeting && (
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
-          <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+          <div className="flex justify-between items-center border-b border-slate-100 pb-3 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-red-600" />
               <h2 className="font-bold text-slate-800 text-base">
                 Última Reunión del Comité: {new Date(latestMeeting.meetingDate).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </h2>
             </div>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">
-              Acta Oficial Cerrada
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">
+                Acta Oficial Cerrada
+              </span>
+              <MeetingModal meeting={latestMeeting} canManage={canManage} />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
@@ -104,6 +129,55 @@ export default async function SeguimientoPage() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Historial de Reuniones Anteriores */}
+      {campaign.weeklyMeetings.length > 1 && (
+        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="w-4 h-4 text-slate-600" />
+              <h3 className="font-bold text-slate-800 text-sm">Historial de Actas Anteriores</h3>
+              <span className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full font-semibold">
+                {campaign.weeklyMeetings.length - 1} anteriores
+              </span>
+            </div>
+          </div>
+
+          <div className="divide-y divide-slate-100">
+            {campaign.weeklyMeetings.slice(1).map((m) => (
+              <div key={m.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="space-y-1">
+                  <div className="font-bold text-slate-800 flex items-center gap-2">
+                    <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                    <span>
+                      {new Date(m.meetingDate).toLocaleDateString('es-ES', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                  <p className="text-slate-600 text-[11px] line-clamp-1">
+                    <strong>Orden del día:</strong> {m.agenda}
+                  </p>
+                  <p className="text-emerald-700 text-[11px] line-clamp-1">
+                    <strong>Acuerdos:</strong> {m.decisionsTaken}
+                  </p>
+                </div>
+                <div className="shrink-0 flex items-center gap-2">
+                  <MeetingModal
+                    meeting={m}
+                    canManage={canManage}
+                    triggerText="Editar / Ver"
+                    triggerClassName="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg transition flex items-center gap-1.5"
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

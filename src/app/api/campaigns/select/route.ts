@@ -2,9 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
 import { ACTIVE_CAMPAIGN_COOKIE } from '@/lib/campaign-context';
+import { getActiveRole, permissions } from '@/lib/permissions-server';
 
 export async function POST(req: NextRequest) {
   try {
+    const activeRole = await getActiveRole();
+    if (!permissions.canSwitchAllMunicipalities(activeRole)) {
+      return NextResponse.json(
+        { error: 'Tu rol actual solo tiene acceso a su municipio asignado.' },
+        { status: 403 }
+      );
+    }
+
     const { campaignId } = await req.json();
 
     if (!campaignId) {

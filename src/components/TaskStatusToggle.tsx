@@ -44,7 +44,7 @@ export default function TaskStatusToggle({
   return (
     <button
       onClick={handleToggle}
-      disabled={isUpdating}
+      disabled={disabled || isUpdating}
       className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-full transition flex items-center gap-1 border ${
         disabled ? 'cursor-default opacity-85' : 'cursor-pointer hover:opacity-80'
       } ${
@@ -54,7 +54,7 @@ export default function TaskStatusToggle({
           ? 'bg-amber-100 text-amber-800 border-amber-300'
           : 'bg-slate-100 text-slate-700 border-slate-300'
       }`}
-      title={disabled ? 'Modo Solo Lectura (Supervisor)' : 'Haz clic para cambiar estado (Pendiente → En curso → Completada)'}
+      title={disabled ? 'Modo Solo Lectura' : 'Haz clic para cambiar estado (Pendiente → En curso → Completada)'}
     >
       {status === 'COMPLETED' ? (
         <CheckCircle2 className="w-3 h-3 text-emerald-600" />

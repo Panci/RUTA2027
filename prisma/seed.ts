@@ -26,6 +26,16 @@ async function main() {
 
   // 2. Usuarios del Equipo de Campaña
   const passwordHash = await bcrypt.hash('Demo2027!', 10);
+  const superPasswordHash = await bcrypt.hash('super123', 10);
+
+  const superAdmin = await prisma.user.create({
+    data: {
+      name: 'Super Administrador',
+      email: 'superadmin@elecciones.local',
+      passwordHash: superPasswordHash,
+      role: 'ADMIN',
+    },
+  });
 
   const globalAdmin = await prisma.user.create({
     data: {

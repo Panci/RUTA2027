@@ -103,3 +103,23 @@ export const CampaignCreateSchema = z.object({
   weaknesses: z.string().optional().nullable(),
   risks: z.string().optional().nullable(),
 });
+
+/**
+ * Esquema de validación para actas de reuniones de comité
+ */
+export const MeetingSchema = z.object({
+  meetingDate: z
+    .string()
+    .min(1, 'La fecha de la reunión es obligatoria')
+    .refine((val) => !isNaN(new Date(val).getTime()), { message: 'Fecha de reunión no válida' })
+    .transform((val) => new Date(val)),
+  agenda: z.string().min(1, 'El orden del día es obligatorio'),
+  decisionsTaken: z.string().min(1, 'Las decisiones y acuerdos tomados son obligatorios'),
+  roadblocks: z.string().optional().nullable(),
+  risksDetected: z.string().optional().nullable(),
+  priorityChanges: z.string().optional().nullable(),
+});
+
+export const MeetingUpdateSchema = MeetingSchema.extend({
+  id: z.string().min(1, 'El ID de la reunión es obligatorio'),
+});

@@ -4,6 +4,7 @@ import { getActiveCampaign } from '@/lib/campaign-context';
 import { getActiveRole, permissions } from '@/lib/permissions-server';
 import ClassificationEditor from './ClassificationEditor';
 import DistrictCharts from './DistrictCharts';
+import DistrictEditModal from './DistrictEditModal';
 import { MapPin, TrendingUp, ShieldAlert, Award, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -54,13 +55,12 @@ export default async function DistritosPage() {
       return res ? res.votes : 0;
     };
 
-    return {
-      distrito: d.code,
-      AVANZA: getVotes('AVANZA'),
-      PP: getVotes('PP'),
-      PSOE: getVotes('PSOE'),
-      VOX: getVotes('VOX'),
-    };
+    const point: { [key: string]: any; distrito: string } = { distrito: d.code };
+    campaign.parties.forEach((p) => {
+      point[p.acronym] = getVotes(p.acronym);
+    });
+
+    return point;
   });
 
   return (
@@ -68,16 +68,16 @@ export default async function DistritosPage() {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2">
-          <span className="text-xs uppercase tracking-wider font-semibold text-red-600">Estrategia Territorial</span>
+          <span className="text-xs uppercase tracking-wider font-semibold text-rose-600">Estrategia Territorial</span>
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mt-1">Análisis y Comparativa por Distritos</h1>
         <p className="text-sm text-slate-500 mt-0.5">
-          Diagnóstico electoral distrito a distrito frente a la media municipal ({municipalAvgPercent.toFixed(1)}% para {ownParty.acronym}).
+          Diagnóstico electoral distrito a distrito frente a la media municipal ({municipalAvgPercent.toFixed(1)}% para {ownParty?.acronym || 'nuestra candidatura'}).
         </p>
       </div>
 
       {/* Gráfico Comparativo de Votos Recharts */}
-      <DistrictCharts data={chartData} />
+      <DistrictCharts data={chartData} parties={campaign.parties} />
 
       {/* Tabla Matriz Comparativa (Sección 5) */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -208,9 +208,12 @@ export default async function DistritosPage() {
                   <MapPin className="w-4 h-4 text-red-600" />
                   {d.name}
                 </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 rounded text-slate-700">
-                  {d.code}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 rounded text-slate-700">
+                    {d.code}
+                  </span>
+                  <DistrictEditModal district={d} canManage={canClassify} />
+                </div>
               </div>
 
               <div className="space-y-2 text-xs">

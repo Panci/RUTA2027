@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import {
   MapPin,
   Plus,
@@ -16,6 +17,9 @@ import {
   X,
   ExternalLink,
   Eye,
+  Search,
+  UserCheck,
+  UserPlus,
 } from 'lucide-react';
 
 interface CampaignCardData {
@@ -32,24 +36,57 @@ interface CampaignCardData {
     actionTasks: number;
     parties: number;
   };
+  users?: {
+    id: string;
+    name: string;
+    email: string;
+  }[];
 }
 
 export default function MunicipiosClient({
-  campaigns,
+  campaigns: initialCampaigns,
   activeId,
   canManage = true,
+  isSuperAdmin = true,
+  activeRole = 'CAMPAIGN_DIRECTOR',
 }: {
   campaigns: CampaignCardData[];
   activeId: string | null;
   canManage?: boolean;
+  isSuperAdmin?: boolean;
+  activeRole?: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const shouldOpenCreate = searchParams?.get('crear') === 'true';
 
+  const [campaigns, setCampaigns] = useState<CampaignCardData[]>(initialCampaigns);
   const [isModalOpen, setIsModalOpen] = useState(shouldOpenCreate);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Estado para modal de asignación de Director de Campaña (Solo Superadmin)
+  const [directorModalCampaign, setDirectorModalCampaign] = useState<CampaignCardData | null>(null);
+  const [directorForm, setDirectorForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+  });
+  const [directorSaving, setDirectorSaving] = useState(false);
+  const [directorError, setDirectorError] = useState('');
+  const [directorSuccess, setDirectorSuccess] = useState('');
+
+  const filteredCampaigns = useMemo(() => {
+    if (!searchTerm.trim()) return campaigns;
+    const q = searchTerm.toLowerCase().trim();
+    return campaigns.filter(
+      (c) =>
+        c.municipality.toLowerCase().includes(q) ||
+        c.partyOrCoalition.toLowerCase().includes(q) ||
+        c.candidacyName.toLowerCase().includes(q)
+    );
+  }, [campaigns, searchTerm]);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -142,6 +179,52 @@ export default function MunicipiosClient({
     }
   };
 
+  const handleCreateDirector = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!directorModalCampaign) return;
+    if (!directorForm.name.trim() || !directorForm.email.trim() || !directorForm.password) {
+      setDirectorError('Por favor completa todos los campos.');
+      return;
+    }
+    setDirectorSaving(true);
+    setDirectorError('');
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: directorForm.name.trim(),
+          email: directorForm.email.trim().toLowerCase(),
+          password: directorForm.password,
+          role: 'CAMPAIGN_DIRECTOR',
+          campaignId: directorModalCampaign.id,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setDirectorError(data.error || 'Error al crear el Director de Campaña.');
+        return;
+      }
+
+      setCampaigns((prev) =>
+        prev.map((c) =>
+          c.id === directorModalCampaign.id
+            ? {
+                ...c,
+                users: [{ id: data.id, name: data.name, email: data.email }],
+              }
+            : c
+        )
+      );
+      setDirectorSuccess(`Director de Campaña "${data.name}" dado de alta y asignado con éxito a ${directorModalCampaign.municipality}.`);
+      setDirectorModalCampaign(null);
+    } catch {
+      setDirectorError('Error de conexión con el servidor.');
+    } finally {
+      setDirectorSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -149,32 +232,85 @@ export default function MunicipiosClient({
         <div>
           <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
             <MapPin className="w-5 h-5 text-red-600" />
-            Gestión Multi-Municipio: Elecciones Municipales 2027
+            {isSuperAdmin
+              ? 'Gestión Multi-Municipio: Elecciones Municipales 2027'
+              : 'Municipio y Sede de Campaña Asignada'}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Administra de forma aislada y simultánea las campañas electorales de cada municipio con sus propios censos, distritos, rivales y agendas.
+            {isSuperAdmin
+              ? 'Administra de forma aislada y simultánea las campañas electorales de cada municipio y asigna a sus Directores de Campaña.'
+              : 'Espacio de mando y recursos territoriales asignados a tu dirección de campaña por el Administrador Global.'}
           </p>
         </div>
-        {canManage ? (
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center justify-center gap-2 shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            Dar de Alta Nuevo Municipio
-          </button>
+        {isSuperAdmin ? (
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href="/equipo"
+              className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-lg transition flex items-center gap-1.5 border border-slate-200 shadow-2xs"
+              title="Ver y gestionar todos los Directores de Campaña y usuarios"
+            >
+              <UserCheck className="w-4 h-4 text-cyan-600" />
+              <span>Directores y Equipo</span>
+            </Link>
+            {canManage && (
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center justify-center gap-2 shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                Dar de Alta Nuevo Municipio
+              </button>
+            )}
+          </div>
         ) : (
-          <div className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 shrink-0">
-            <Eye className="w-4 h-4 text-blue-600" />
-            <span>Supervisión Global (Solo Lectura)</span>
+          <div className="flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 text-rose-800 text-xs font-bold rounded-lg border border-rose-200/80 shrink-0">
+            <span>🏛️ Municipio Asignado</span>
           </div>
         )}
       </div>
 
+      {directorSuccess && (
+        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center justify-between">
+          <span className="flex items-center gap-2 font-medium">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            {directorSuccess}
+          </span>
+          <button onClick={() => setDirectorSuccess('')} className="text-emerald-700 hover:text-emerald-900">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Barra de Búsqueda y Filtro de Municipios (Solo para Superadministración con múltiples campañas) */}
+      {isSuperAdmin && campaigns.length > 1 && (
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="relative w-full sm:w-96">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Buscar por municipio, sigla o candidatura..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 focus:bg-white transition"
+            />
+          </div>
+          <div className="flex items-center gap-2 text-xs text-slate-500 self-end sm:self-center font-medium">
+            <span>Mostrando <strong>{filteredCampaigns.length}</strong> de <strong>{campaigns.length}</strong> municipios</span>
+          </div>
+        </div>
+      )}
+
       {/* Grid de Municipios */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {campaigns.map((c) => {
-          const isActive = c.id === activeId;
+      {filteredCampaigns.length === 0 ? (
+        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500">
+          <MapPin className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+          <p className="font-semibold text-sm text-slate-700">No se encontraron municipios</p>
+          <p className="text-xs text-slate-400 mt-1">Prueba con otro término de búsqueda.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredCampaigns.map((c) => {
+            const isActive = c.id === activeId;
 
           return (
             <div
@@ -238,6 +374,33 @@ export default function MunicipiosClient({
                     </span>
                     <span className="font-semibold text-slate-800">{c._count.actionTasks}</span>
                   </div>
+
+                  {/* Director de Campaña Asignado */}
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-slate-500">
+                      <UserCheck className="w-3.5 h-3.5 text-cyan-600" />
+                      Director/a:
+                    </span>
+                    {c.users && c.users.length > 0 ? (
+                      <span className="font-semibold text-cyan-950 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200 text-[11px] truncate max-w-[150px]" title={c.users[0].email}>
+                        {c.users[0].name}
+                      </span>
+                    ) : isSuperAdmin ? (
+                      <button
+                        onClick={() => {
+                          setDirectorModalCampaign(c);
+                          setDirectorForm({ name: '', email: '', password: '' });
+                          setDirectorError('');
+                        }}
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 border border-cyan-300 px-2 py-0.5 rounded transition"
+                      >
+                        <UserPlus className="w-3 h-3" />
+                        + Asignar Director
+                      </button>
+                    ) : (
+                      <span className="text-slate-400 italic text-[11px]">Sin asignar</span>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -276,6 +439,7 @@ export default function MunicipiosClient({
           );
         })}
       </div>
+      )}
 
       {/* Modal de Alta de Nuevo Municipio */}
       {isModalOpen && (
@@ -407,6 +571,97 @@ export default function MunicipiosClient({
                   className="px-5 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold rounded-lg transition shadow-xs"
                 >
                   {isSubmitting ? 'Creando Municipio...' : 'Registrar Municipio'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Asignar / Dar de Alta Director de Campaña (Solo Superadmin) */}
+      {directorModalCampaign && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-cyan-600" />
+                  Asignar Director de Campaña
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Municipio: <strong className="text-slate-800">{directorModalCampaign.municipality}</strong>
+                </p>
+              </div>
+              <button
+                onClick={() => setDirectorModalCampaign(null)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-md"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {directorError && (
+              <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{directorError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleCreateDirector} className="space-y-3.5 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Nombre y Apellidos *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej: Laura Gómez Pérez"
+                  value={directorForm.name}
+                  onChange={(e) => setDirectorForm({ ...directorForm, name: e.target.value })}
+                  className="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Email de Acceso *</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="director@municipio.es"
+                  value={directorForm.email}
+                  onChange={(e) => setDirectorForm({ ...directorForm, email: e.target.value })}
+                  className="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Contraseña Inicial *</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Mínimo 6 caracteres"
+                  value={directorForm.password}
+                  onChange={(e) => setDirectorForm({ ...directorForm, password: e.target.value })}
+                  className="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                />
+              </div>
+
+              <div className="p-3 bg-cyan-50 border border-cyan-200 rounded-lg text-cyan-900 text-[11px] leading-relaxed">
+                ℹ️ Esta persona tendrá el rol de <strong>Director de Campaña</strong> asignado estrictamente a <strong>{directorModalCampaign.municipality}</strong>. No podrá acceder ni cambiar a otros municipios, y podrá dar de alta a su propio equipo local (Candidato/a, Comunicación, Distritos, Voluntarios).
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setDirectorModalCampaign(null)}
+                  className="px-4 py-2 text-slate-600 hover:text-slate-800 font-semibold"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={directorSaving}
+                  className="px-5 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white font-bold rounded-lg transition shadow-xs"
+                >
+                  {directorSaving ? 'Creando Director...' : 'Crear y Asignar Director'}
                 </button>
               </div>
             </form>

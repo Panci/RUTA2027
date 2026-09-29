@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Settings, Shield, Target, Calendar, Users, Wallet, Layers, AlertTriangle } from 'lucide-react';
+import Link from 'next/link';
+import { Settings, Shield, Target, Calendar, Users, Wallet, Layers, AlertTriangle, UserCheck } from 'lucide-react';
 import AuditLogViewer from './AuditLogViewer';
 
 interface CampaignData {
@@ -140,7 +141,16 @@ export default function ConfiguracionClient({ campaign }: Props) {
 
           <div className="space-y-4 text-xs pt-4 border-t border-slate-100">
             <div>
-              <label className="font-bold text-slate-700 block mb-1">Equipo Responsable y Voluntariado</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="font-bold text-slate-700 block">Equipo Responsable y Voluntariado</label>
+                <Link
+                  href="/equipo"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg border border-rose-200 transition"
+                >
+                  <UserCheck className="w-3.5 h-3.5" />
+                  <span>Gestionar Roles y Accesos del Equipo →</span>
+                </Link>
+              </div>
               <textarea
                 defaultValue={campaign.teamDescription || ''}
                 readOnly

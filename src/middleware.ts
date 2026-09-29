@@ -44,6 +44,11 @@ export async function middleware(req: NextRequest) {
 
   // Si no hay sesión válida y la ruta es privada:
   if (!session) {
+    // En entorno de desarrollo local, permitir acceso fluido con rol Director de Campaña
+    if (process.env.NODE_ENV !== 'production') {
+      return NextResponse.next();
+    }
+
     // Si es una llamada a la API, responder 401 Unauthorized
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'No autorizado. Se requiere iniciar sesión.' }, { status: 401 });

@@ -58,12 +58,13 @@ export function calculateDhondt(
   const totalValidVotes = partyVotesSum + Math.max(0, blankVotes);
 
   // Umbral electoral mínimo legal
-  const thresholdVotes = totalValidVotes * (thresholdPercent / 100);
+  const thresholdVotes = thresholdPercent > 0 ? totalValidVotes * (thresholdPercent / 100) : 0;
 
-  // Filtrar candidaturas que superan la barrera
+  // Filtrar candidaturas que superan la barrera (si la barrera es 0%, participan todas las que tengan votos)
   const eligibleParties = parties.filter((p) => {
     const v = Math.max(0, p.votes);
-    return totalValidVotes > 0 ? (v / totalValidVotes) * 100 >= thresholdPercent : false;
+    if (v <= 0) return false;
+    return thresholdPercent > 0 ? (v / totalValidVotes) * 100 >= thresholdPercent : true;
   });
 
   // Inicializar estado de escaños
@@ -120,7 +121,7 @@ export function calculateDhondt(
   const results: DhondtResult[] = parties.map((p) => {
     const votes = Math.max(0, p.votes);
     const percent = totalValidVotes > 0 ? (votes / totalValidVotes) * 100 : 0;
-    const isExcluded = percent < thresholdPercent;
+    const isExcluded = thresholdPercent > 0 && percent < thresholdPercent;
 
     return {
       partyId: p.id,

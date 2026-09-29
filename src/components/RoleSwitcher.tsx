@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ShieldCheck, ChevronUp, Check, Eye } from 'lucide-react';
-import { ROLE_DETAILS, UserRole } from '@/lib/permissions';
+import { ROLE_DETAILS, UserRole, isRouteAllowedForRole } from '@/lib/permissions';
 
 export default function RoleSwitcher({ initialRole = 'CAMPAIGN_DIRECTOR' }: { initialRole?: UserRole }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,7 +37,12 @@ export default function RoleSwitcher({ initialRole = 'CAMPAIGN_DIRECTOR' }: { in
       if (res.ok) {
         setActiveRole(role);
         setIsOpen(false);
-        window.location.reload();
+        const currentPath = window.location.pathname;
+        if (!isRouteAllowedForRole(currentPath, role)) {
+          window.location.href = '/';
+        } else {
+          window.location.reload();
+        }
       }
     } catch (err) {
       console.error(err);
@@ -71,7 +76,7 @@ export default function RoleSwitcher({ initialRole = 'CAMPAIGN_DIRECTOR' }: { in
                   key={r}
                   onClick={() => handleSelectRole(r)}
                   className={`w-full text-left px-3 py-2 text-xs flex items-start justify-between transition ${
-                    isSelected ? 'bg-red-50 text-red-900 font-bold' : 'text-slate-700 hover:bg-slate-50'
+                    isSelected ? 'bg-rose-50 text-rose-900 font-bold' : 'text-slate-700 hover:bg-slate-50'
                   }`}
                 >
                   <div className="pr-2">
@@ -85,7 +90,7 @@ export default function RoleSwitcher({ initialRole = 'CAMPAIGN_DIRECTOR' }: { in
                     </div>
                     <p className="text-[10px] text-slate-500 line-clamp-1">{info.description}</p>
                   </div>
-                  {isSelected && <Check className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />}
+                  {isSelected && <Check className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />}
                 </button>
               );
             })}
@@ -96,25 +101,25 @@ export default function RoleSwitcher({ initialRole = 'CAMPAIGN_DIRECTOR' }: { in
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full text-left flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 transition group"
+        className="w-full text-left flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/90 shadow-2xs transition group"
         title="Haz clic para cambiar de rol y probar permisos"
       >
         <div className="flex items-center gap-2 overflow-hidden">
           {isSupervisor ? (
-            <Eye className="w-4 h-4 text-blue-400 shrink-0" />
+            <Eye className="w-4 h-4 text-blue-500 shrink-0" />
           ) : (
-            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
           )}
           <div className="text-xs truncate">
-            <p className="font-semibold text-slate-200 truncate leading-tight">
+            <p className="font-semibold text-slate-800 truncate leading-tight">
               {currentRoleInfo.label}
             </p>
-            <p className="text-[10px] text-slate-400 truncate">
+            <p className="text-[10px] text-slate-500 truncate">
               {isSupervisor ? '👁️ Observador (Sin edición)' : 'Comité de Dirección'}
             </p>
           </div>
         </div>
-        <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-200 transition shrink-0" />
+        <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition shrink-0" />
       </button>
     </div>
   );

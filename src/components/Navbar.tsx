@@ -1,10 +1,14 @@
 import React from 'react';
 import { CalendarDays, AlertCircle } from 'lucide-react';
 import { getAllCampaigns, getActiveCampaign } from '@/lib/campaign-context';
+import { getActiveRole, permissions } from '@/lib/permissions-server';
 import MunicipalitySelector from './MunicipalitySelector';
 
 export default async function Navbar() {
   const campaigns = await getAllCampaigns();
+  const activeRole = await getActiveRole();
+  const canSwitch = permissions.canSwitchAllMunicipalities(activeRole);
+
   const activeCampaign = await getActiveCampaign({
     include: {
       phases: {
@@ -22,6 +26,7 @@ export default async function Navbar() {
       <div className="flex items-center gap-3">
         <MunicipalitySelector
           initialActiveId={activeCampaign?.id || null}
+          canSwitch={canSwitch}
           initialCampaigns={campaigns.map((c) => ({
             id: c.id,
             name: c.name,

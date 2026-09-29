@@ -5,6 +5,7 @@ import { getActiveRole, permissions } from '@/lib/permissions-server';
 import Link from 'next/link';
 import TaskCreatorModal from '@/components/TaskCreatorModal';
 import TaskStatusToggle from '@/components/TaskStatusToggle';
+import TaskEditDeleteModal from '@/components/TaskEditDeleteModal';
 import {
   Calendar,
   CheckCircle2,
@@ -17,6 +18,11 @@ import {
   ArrowRight,
   Sparkles,
   ShieldAlert,
+  ShieldCheck,
+  TrendingUp,
+  Users,
+  User,
+  MessageSquare,
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -68,6 +74,13 @@ export default async function EstaSemanaPage() {
   const canCreate = permissions.canCreateTasks(activeRole);
   const canChangeStatus = permissions.canChangeTaskStatus(activeRole);
 
+  const districtOptions = campaign.districts.map((d) => ({ id: d.id, name: d.name }));
+  const priorityOptions = campaign.priorities.map((p) => ({
+    id: p.id,
+    orderNumber: p.orderNumber,
+    title: p.title,
+  }));
+
   // Competidores recientes
   const competitorLogs = await prisma.competitorTracking.findMany({
     take: 3,
@@ -78,52 +91,128 @@ export default async function EstaSemanaPage() {
   return (
     <div className="space-y-6">
       {/* 1. Header con Objetivo Central y Las 6 Preguntas Clave */}
-      <div className="bg-slate-900 text-white rounded-xl p-6 shadow-md border border-slate-800">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-4">
+      <div className="bg-white rounded-2xl p-6 shadow-2xs border border-slate-200/90 space-y-5">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-4">
           <div>
-            <span className="text-xs uppercase tracking-wider font-semibold text-red-400">
-              Panel de Mando Operativo
-            </span>
-            <h1 className="text-2xl font-bold mt-1">Esta Semana en {campaign.municipality}</h1>
-            <p className="text-slate-400 text-sm mt-0.5">
-              Candidatura: <strong className="text-white">{campaign.candidacyName}</strong> | Objetivo:{' '}
-              <span className="text-emerald-400 font-semibold">{campaign.politicalGoal}</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50/80 text-rose-700 border border-rose-200/80 text-xs font-bold uppercase tracking-wider">
+              <Target className="w-3.5 h-3.5 text-rose-500" />
+              <span>Panel de Mando Operativo</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">
+              Esta Semana en {campaign.municipality}
+            </h1>
+            <p className="text-slate-500 text-xs sm:text-sm mt-1 flex flex-wrap items-center gap-2">
+              <span>
+                Candidatura: <strong className="text-slate-800">{campaign.candidacyName}</strong>
+              </span>
+              <span className="text-slate-300">•</span>
+              <span>
+                Objetivo:{' '}
+                <strong className="text-emerald-700 bg-emerald-50/80 border border-emerald-200/80 px-2 py-0.5 rounded-lg text-xs font-bold">
+                  {campaign.politicalGoal}
+                </strong>
+              </span>
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <TaskCreatorModal
-              districts={campaign.districts.map((d) => ({ id: d.id, name: d.name }))}
-              priorities={campaign.priorities.map((p) => ({ id: p.id, orderNumber: p.orderNumber, title: p.title }))}
+              districts={districtOptions}
+              priorities={priorityOptions}
               readOnly={!canCreate}
             />
           </div>
         </div>
 
-        {/* Las 6 Preguntas Clave para el Equipo */}
-        <div className="mt-5 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
-          <div className="bg-slate-800/80 p-3 rounded-lg border border-slate-700/60">
-            <span className="text-slate-400 block font-medium">1. ¿Dónde somos fuertes?</span>
-            <span className="font-bold text-emerald-400 text-sm mt-0.5 block">Distrito 4 (36.2%)</span>
+        {/* Las 6 Preguntas Clave para el Equipo (Estilo Tarjetas Pastel con Círculos de Color) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+          {/* 1. ¿Dónde somos fuertes? */}
+          <div className="bg-[#ecfdf5] hover:bg-[#d1fae5] border border-[#a7f3d0] p-3 rounded-2xl flex items-center gap-3 shadow-2xs transition-all group">
+            <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-2xs transition-transform group-hover:scale-105">
+              <ShieldCheck className="w-5 h-5 text-white stroke-[2.2]" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider block truncate">
+                1. ¿Dónde fuertes?
+              </span>
+              <span className="font-extrabold text-emerald-900 text-xs sm:text-sm mt-0.5 block truncate">
+                Distrito 4 (36.2%)
+              </span>
+            </div>
           </div>
-          <div className="bg-slate-800/80 p-3 rounded-lg border border-slate-700/60">
-            <span className="text-slate-400 block font-medium">2. ¿Dónde lidera el rival?</span>
-            <span className="font-bold text-blue-400 text-sm mt-0.5 block">Distrito 1 (PP 49.5%)</span>
+
+          {/* 2. ¿Dónde lidera el rival? */}
+          <div className="bg-[#f0f9ff] hover:bg-[#e0f2fe] border border-[#bae6fd] p-3 rounded-2xl flex items-center gap-3 shadow-2xs transition-all group">
+            <div className="w-10 h-10 rounded-full bg-sky-600 text-white flex items-center justify-center shrink-0 shadow-2xs transition-transform group-hover:scale-105">
+              <Eye className="w-5 h-5 text-white stroke-[2.2]" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider block truncate">
+                2. ¿Lidera rival?
+              </span>
+              <span className="font-extrabold text-sky-900 text-xs sm:text-sm mt-0.5 block truncate">
+                Distrito 1 (PP 49.5%)
+              </span>
+            </div>
           </div>
-          <div className="bg-slate-800/80 p-3 rounded-lg border border-slate-700/60">
-            <span className="text-slate-400 block font-medium">3. ¿Dónde crecer?</span>
-            <span className="font-bold text-amber-400 text-sm mt-0.5 block">Distrito 2 (+18.5k censo)</span>
+
+          {/* 3. ¿Dónde crecer? */}
+          <div className="bg-[#fffbeb] hover:bg-[#fef3c7] border border-[#fde68a] p-3 rounded-2xl flex items-center gap-3 shadow-2xs transition-all group">
+            <div className="w-10 h-10 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-2xs transition-transform group-hover:scale-105">
+              <TrendingUp className="w-5 h-5 text-white stroke-[2.2]" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider block truncate">
+                3. ¿Dónde crecer?
+              </span>
+              <span className="font-extrabold text-amber-900 text-xs sm:text-sm mt-0.5 block truncate">
+                Distrito 2 (+18.5k)
+              </span>
+            </div>
           </div>
-          <div className="bg-slate-800/80 p-3 rounded-lg border border-slate-700/60">
-            <span className="text-slate-400 block font-medium">4. ¿Público prioritario?</span>
-            <span className="font-semibold text-slate-200 mt-0.5 block truncate">Familias trabajadoras &lt;40</span>
+
+          {/* 4. ¿Público prioritario? */}
+          <div className="bg-[#faf5ff] hover:bg-[#f3e8ff] border border-[#e9d5ff] p-3 rounded-2xl flex items-center gap-3 shadow-2xs transition-all group">
+            <div className="w-10 h-10 rounded-full bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-2xs transition-transform group-hover:scale-105">
+              <Users className="w-5 h-5 text-white stroke-[2.2]" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider block truncate">
+                4. ¿Público meta?
+              </span>
+              <span className="font-extrabold text-purple-900 text-xs sm:text-sm mt-0.5 block truncate">
+                Familias &lt;40 años
+              </span>
+            </div>
           </div>
-          <div className="bg-slate-800/80 p-3 rounded-lg border border-slate-700/60">
-            <span className="text-slate-400 block font-medium">5. ¿Prioridad de la semana?</span>
-            <span className="font-semibold text-emerald-300 mt-0.5 block truncate">Limpieza y barrios</span>
+
+          {/* 5. ¿Prioridad de la semana? */}
+          <div className="bg-[#f0fdfa] hover:bg-[#ccfbf1] border border-[#99f6e4] p-3 rounded-2xl flex items-center gap-3 shadow-2xs transition-all group">
+            <div className="w-10 h-10 rounded-full bg-teal-600 text-white flex items-center justify-center shrink-0 shadow-2xs transition-transform group-hover:scale-105">
+              <Sparkles className="w-5 h-5 text-white stroke-[2.2]" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider block truncate">
+                5. ¿Prioridad semana?
+              </span>
+              <span className="font-extrabold text-teal-900 text-xs sm:text-sm mt-0.5 block truncate">
+                Limpieza y barrios
+              </span>
+            </div>
           </div>
-          <div className="bg-slate-800/80 p-3 rounded-lg border border-slate-700/60">
-            <span className="text-slate-400 block font-medium">6. ¿Acción concreta?</span>
-            <span className="font-semibold text-red-300 mt-0.5 block truncate">Paseo Ensanche D02</span>
+
+          {/* 6. ¿Acción concreta? */}
+          <div className="bg-[#fff1f2] hover:bg-[#ffe4e6] border border-[#fecdd3] p-3 rounded-2xl flex items-center gap-3 shadow-2xs transition-all group">
+            <div className="w-10 h-10 rounded-full bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-2xs transition-transform group-hover:scale-105">
+              <Megaphone className="w-5 h-5 text-white stroke-[2.2]" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider block truncate">
+                6. ¿Acción concreta?
+              </span>
+              <span className="font-extrabold text-rose-900 text-xs sm:text-sm mt-0.5 block truncate">
+                Paseo Ensanche D02
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -133,61 +222,131 @@ export default async function EstaSemanaPage() {
         {/* Columna 1: Tareas Pendientes y de Campo */}
         <div className="lg:col-span-2 space-y-6">
           {/* Tareas de la Semana */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-red-600" />
+                <Clock className="w-5 h-5 text-rose-500" />
                 <h2 className="font-bold text-slate-800 text-base">Acciones y Tareas de la Semana</h2>
-                <span className="text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded-full font-semibold">
+                <span className="text-xs px-2.5 py-0.5 bg-rose-50 text-rose-700 border border-rose-200/80 rounded-full font-bold">
                   {pendingTasks.length} activas
                 </span>
               </div>
-              <Link href="/actos" className="text-xs text-red-600 hover:text-red-700 font-medium flex items-center gap-1">
+              <Link href="/actos" className="text-xs text-rose-500 hover:text-rose-600 font-semibold flex items-center gap-1 transition">
                 Ver todas ({tasks.length}) <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
 
-            <div className="divide-y divide-slate-100">
-              {pendingTasks.map((t) => (
-                <div key={t.id} className="py-3.5 flex items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-bold px-2 py-0.5 bg-slate-100 text-slate-700 rounded border border-slate-200">
-                        {t.type}
-                      </span>
-                      {t.district && (
-                        <span className="text-xs font-medium text-slate-600 flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-red-500" />
-                          {t.district.name}
-                        </span>
+            {pendingTasks.length === 0 ? (
+              <div className="text-center py-10 bg-slate-50/70 rounded-xl border border-dashed border-slate-200">
+                <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+                <p className="text-xs font-semibold text-slate-700">No hay tareas pendientes para esta semana</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Todas las acciones planificadas están al día o completadas.</p>
+              </div>
+            ) : (
+              <div className="space-y-3.5">
+                {pendingTasks.map((t) => {
+                  const typeConfig: Record<string, { label: string; badge: string; border: string }> = {
+                    TASK: { label: 'Tarea', badge: 'bg-blue-50 text-blue-700 border-blue-200', border: 'border-l-blue-500' },
+                    VISIT: { label: 'Visita', badge: 'bg-purple-50 text-purple-700 border-purple-200', border: 'border-l-purple-500' },
+                    MEETING: { label: 'Reunión', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200', border: 'border-l-emerald-500' },
+                    EVENT: { label: 'Acto', badge: 'bg-amber-50 text-amber-700 border-amber-200', border: 'border-l-amber-500' },
+                  };
+
+                  const currentType = typeConfig[t.type] || {
+                    label: t.type,
+                    badge: 'bg-slate-100 text-slate-700 border-slate-200',
+                    border: 'border-l-slate-400',
+                  };
+
+                  const priorityStyle =
+                    t.priority?.orderNumber === 1
+                      ? 'bg-rose-50 text-rose-700 border-rose-200'
+                      : t.priority?.orderNumber === 2
+                      ? 'bg-amber-50 text-amber-700 border-amber-200'
+                      : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+
+                  return (
+                    <div
+                      key={t.id}
+                      className={`group bg-slate-50/70 hover:bg-white rounded-xl border border-slate-200/90 border-l-4 ${currentType.border} p-4 shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-slate-300 transition-all duration-200 space-y-2.5`}
+                    >
+                      {/* Cabecera de la tarjeta: Badges + Fecha y Estado */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${currentType.badge}`}>
+                            {t.type}
+                          </span>
+
+                          {t.district && (
+                            <span className="text-xs font-medium text-slate-600 flex items-center gap-1 bg-white px-2 py-0.5 rounded-md border border-slate-200/80 shadow-2xs">
+                              <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                              {t.district.name}
+                            </span>
+                          )}
+
+                          {t.priority && (
+                            <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-bold border ${priorityStyle}`}>
+                              P{t.priority.orderNumber}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs font-semibold text-slate-500 flex items-center gap-1 bg-white px-2.5 py-1 rounded-md border border-slate-200/80 shadow-2xs">
+                            <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
+                            {new Date(t.dueDate).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
+                          </span>
+                          <TaskStatusToggle taskId={t.id} initialStatus={t.status} disabled={!canChangeStatus} />
+                          <TaskEditDeleteModal
+                            task={t}
+                            districts={districtOptions}
+                            priorities={priorityOptions}
+                            canManage={canCreate}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Título y descripción */}
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900 group-hover:text-rose-600 transition-colors leading-snug">
+                          {t.title}
+                        </h3>
+                        {t.description && (
+                          <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                            {t.description}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Mensaje clave / argumentario */}
+                      {t.keyMessage && (
+                        <div className="bg-amber-50/70 border border-amber-200/80 rounded-lg p-2.5 text-xs text-slate-700 flex items-start gap-2">
+                          <span className="text-amber-700 font-bold shrink-0 text-[11px] uppercase tracking-wider flex items-center gap-1">
+                            <MessageSquare className="w-3 h-3" />
+                            Mensaje:
+                          </span>
+                          <span className="italic text-slate-800 font-medium">"{t.keyMessage}"</span>
+                        </div>
                       )}
-                      {t.priority && (
-                        <span className="text-xs px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded font-medium border border-emerald-200">
-                          P{t.priority.orderNumber}
-                        </span>
+
+                      {/* Footer de la tarjeta: Responsable si existe */}
+                      {t.responsible && (
+                        <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-500">
+                          <span className="flex items-center gap-1">
+                            <User className="w-3 h-3 text-slate-400" />
+                            Responsable: <strong className="text-slate-700">{t.responsible.name}</strong>
+                          </span>
+                        </div>
                       )}
                     </div>
-                    <h3 className="text-sm font-semibold text-slate-800">{t.title}</h3>
-                    {t.description && <p className="text-xs text-slate-500">{t.description}</p>}
-                    {t.keyMessage && (
-                      <p className="text-xs text-slate-600 italic bg-slate-50 p-1.5 rounded border border-slate-100">
-                        💬 Mensaje: "{t.keyMessage}"
-                      </p>
-                    )}
-                  </div>
-                  <div className="text-right shrink-0 space-y-1.5">
-                    <span className="text-xs font-medium text-slate-500 block">
-                      {new Date(t.dueDate).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
-                    </span>
-                    <TaskStatusToggle taskId={t.id} initialStatus={t.status} disabled={!canChangeStatus} />
-                  </div>
-                </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Actos y Visitas Programadas */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs">
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-2">
                 <Megaphone className="w-5 h-5 text-emerald-600" />
@@ -197,13 +356,21 @@ export default async function EstaSemanaPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {eventsAndVisits.map((ev) => (
-                <div key={ev.id} className="p-3.5 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5">
+                <div key={ev.id} className="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-1.5">
                   <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-                    <span className="flex items-center gap-1 text-red-600 font-semibold">
+                    <span className="flex items-center gap-1 text-rose-500 font-semibold">
                       <MapPin className="w-3 h-3" />
                       {ev.district?.name || 'Municipal'}
                     </span>
-                    <span>{new Date(ev.dueDate).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span>{new Date(ev.dueDate).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                      <TaskEditDeleteModal
+                        task={ev}
+                        districts={districtOptions}
+                        priorities={priorityOptions}
+                        canManage={canCreate}
+                      />
+                    </div>
                   </div>
                   <h4 className="text-sm font-bold text-slate-800">{ev.title}</h4>
                   <p className="text-xs text-slate-600">Público: {ev.targetAudience || 'Vecindario general'}</p>
@@ -216,7 +383,7 @@ export default async function EstaSemanaPage() {
         {/* Columna 2: Disciplina de Mensaje, Prioridades y Radar de Rivales */}
         <div className="space-y-6">
           {/* Mensajes a Repetir vs Temas a Evitar */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs space-y-4">
             <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
               <Sparkles className="w-5 h-5 text-amber-500" />
               <h2 className="font-bold text-slate-800 text-base">Disciplina de Mensaje</h2>
@@ -234,11 +401,11 @@ export default async function EstaSemanaPage() {
               </div>
 
               <div>
-                <span className="font-bold text-red-700 uppercase tracking-wide text-[11px] block flex items-center gap-1">
-                  <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
+                <span className="font-bold text-rose-700 uppercase tracking-wide text-[11px] block flex items-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
                   Temas que Conviene Evitar
                 </span>
-                <p className="mt-1 text-slate-700 bg-red-50/70 p-2.5 rounded-lg border border-red-200">
+                <p className="mt-1 text-slate-700 bg-rose-50/70 p-2.5 rounded-lg border border-rose-200">
                   {campaign.strategy?.topicsToAvoid || 'Disputas ideológicas estatales ajenas a los problemas locales.'}
                 </p>
               </div>
@@ -246,16 +413,16 @@ export default async function EstaSemanaPage() {
           </div>
 
           {/* Las 3 Prioridades Políticas */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs space-y-3">
             <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
-              <Target className="w-5 h-5 text-red-600" />
+              <Target className="w-5 h-5 text-rose-500" />
               <h2 className="font-bold text-slate-800 text-base">Las 3 Prioridades Políticas</h2>
             </div>
             <div className="space-y-2.5">
               {campaign.priorities.map((p) => (
-                <div key={p.id} className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-1">
+                <div key={p.id} className="p-3 bg-slate-50/70 rounded-xl border border-slate-200/80 text-xs space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center text-[10px]">
+                    <span className="w-5 h-5 rounded-full bg-slate-800 text-rose-200 font-bold flex items-center justify-center text-[10px]">
                       {p.orderNumber}
                     </span>
                     <span className="font-bold text-slate-800">{p.title}</span>
@@ -267,13 +434,13 @@ export default async function EstaSemanaPage() {
           </div>
 
           {/* Radar de Competidores */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs space-y-3">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <div className="flex items-center gap-2">
-                <Eye className="w-5 h-5 text-blue-600" />
+                <Eye className="w-5 h-5 text-sky-600" />
                 <h2 className="font-bold text-slate-800 text-base">Radar de Rivales</h2>
               </div>
-              <Link href="/competidores" className="text-xs text-blue-600 hover:text-blue-700 font-medium">
+              <Link href="/competidores" className="text-xs text-sky-600 hover:text-sky-700 font-semibold transition">
                 Ver todos
               </Link>
             </div>

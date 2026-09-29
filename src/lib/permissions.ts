@@ -65,14 +65,14 @@ export const permissions = {
   // ¿Puede conmutar y ver todos los municipios?
   canSwitchAllMunicipalities: (role: UserRole) => ['ADMIN', 'GLOBAL_SUPERVISOR'].includes(role),
 
-  // ¿Puede crear o eliminar municipios?
-  canManageMunicipalities: (role: UserRole) => ['ADMIN', 'CAMPAIGN_DIRECTOR'].includes(role),
+  // ¿Puede crear o eliminar municipios? (Solo el Administrador Global)
+  canManageMunicipalities: (role: UserRole) => role === 'ADMIN',
 
-  // ¿Puede crear o editar tareas y actos?
-  canCreateTasks: (role: UserRole) => ['ADMIN', 'CAMPAIGN_DIRECTOR', 'COMM_LEAD', 'DISTRICT_LEAD'].includes(role),
+  // ¿Puede crear o editar tareas y actos? (COMM_LEAD y VOLUNTEER en solo lectura)
+  canCreateTasks: (role: UserRole) => ['ADMIN', 'CAMPAIGN_DIRECTOR', 'DISTRICT_LEAD'].includes(role),
 
-  // ¿Puede marcar o cambiar el estado de tareas?
-  canChangeTaskStatus: (role: UserRole) => role !== 'GLOBAL_SUPERVISOR',
+  // ¿Puede marcar o cambiar el estado de tareas? (GLOBAL_SUPERVISOR y COMM_LEAD en solo lectura)
+  canChangeTaskStatus: (role: UserRole) => !['GLOBAL_SUPERVISOR', 'COMM_LEAD'].includes(role),
 
   // ¿Puede modificar la clasificación estratégica de distritos?
   canClassifyDistricts: (role: UserRole) => ['ADMIN', 'CAMPAIGN_DIRECTOR'].includes(role),
@@ -83,9 +83,151 @@ export const permissions = {
   // ¿Puede editar la configuración oficial de la campaña?
   canEditSettings: (role: UserRole) => ['ADMIN', 'CAMPAIGN_DIRECTOR'].includes(role),
 
+  // ¿Puede crear o editar reuniones de comité y actas?
+  canManageMeetings: (role: UserRole) => ['ADMIN', 'CAMPAIGN_DIRECTOR'].includes(role),
+
   // ¿Puede ver la infraestructura técnica y despliegue Dokploy?
   canViewDevOps: (role: UserRole) => role === 'ADMIN',
+
+  // ¿Puede crear o editar mensajes y argumentarios? (VOLUNTEER en solo lectura)
+  canManageMessages: (role: UserRole) => ['ADMIN', 'CAMPAIGN_DIRECTOR', 'COMM_LEAD'].includes(role),
+
+  // ¿Puede gestionar o marcar hitos de la hoja de ruta? (COMM_LEAD y CANDIDATE en solo lectura)
+  canManageRoadmap: (role: UserRole) => ['ADMIN', 'CAMPAIGN_DIRECTOR'].includes(role),
+
+  // ¿Puede registrar o editar movimientos en el radar de competidores? (CANDIDATE en solo lectura)
+  canManageCompetitors: (role: UserRole) => ['ADMIN', 'CAMPAIGN_DIRECTOR', 'COMM_LEAD'].includes(role),
+
+  // ¿Puede dar de alta y gestionar roles y equipo?
+  canManageTeam: (role: UserRole) => ['ADMIN', 'CAMPAIGN_DIRECTOR'].includes(role),
+
+  // ¿Puede editar objetivos políticos y prioridades? (COMM_LEAD en solo lectura)
+  canManageStrategy: (role: UserRole) => ['ADMIN', 'CAMPAIGN_DIRECTOR'].includes(role),
+
+  // ¿Puede crear o editar partidos y rivales? (COMM_LEAD en solo lectura)
+  canManageParties: (role: UserRole) => ['ADMIN', 'CAMPAIGN_DIRECTOR'].includes(role),
+
+  // ¿Puede ajustar o modificar variables de simulación electoral? (COMM_LEAD y GLOBAL_SUPERVISOR en solo lectura)
+  canEditSimulation: (role: UserRole) => !['GLOBAL_SUPERVISOR', 'COMM_LEAD'].includes(role),
 
   // ¿Es un rol de solo lectura (observador)?
   isReadOnly: (role: UserRole) => role === 'GLOBAL_SUPERVISOR',
 };
+
+/**
+ * Rutas permitidas en la barra de navegación lateral para cada perfil.
+ * Oculta módulos innecesarios y protege la confidencialidad según el rol.
+ */
+export const ROLE_NAVIGATION_ACCESS: Record<UserRole, string[]> = {
+  ADMIN: [
+    '/',
+    '/actos',
+    '/seguimiento',
+    '/informe',
+    '/presentacion',
+    '/resultados-2023',
+    '/partidos',
+    '/distritos',
+    '/simulacion',
+    '/diagnostico',
+    '/auditoria',
+    '/prioridades',
+    '/hoja-de-ruta',
+    '/mensajes',
+    '/competidores',
+    '/municipios',
+    '/equipo',
+    '/indicadores',
+    '/configuracion',
+    '/dokploy',
+  ],
+  GLOBAL_SUPERVISOR: [
+    '/',
+    '/actos',
+    '/seguimiento',
+    '/informe',
+    '/presentacion',
+    '/resultados-2023',
+    '/partidos',
+    '/distritos',
+    '/simulacion',
+    '/diagnostico',
+    '/auditoria',
+    '/prioridades',
+    '/hoja-de-ruta',
+    '/mensajes',
+    '/competidores',
+    '/municipios',
+    '/indicadores',
+    '/configuracion',
+  ],
+  CAMPAIGN_DIRECTOR: [
+    '/',
+    '/actos',
+    '/seguimiento',
+    '/informe',
+    '/presentacion',
+    '/resultados-2023',
+    '/partidos',
+    '/distritos',
+    '/simulacion',
+    '/diagnostico',
+    '/auditoria',
+    '/prioridades',
+    '/hoja-de-ruta',
+    '/mensajes',
+    '/competidores',
+    '/municipios',
+    '/equipo',
+    '/indicadores',
+    '/configuracion',
+  ],
+  CANDIDATE: [
+    '/',
+    '/actos',
+    '/informe',
+    '/presentacion',
+    '/resultados-2023',
+    '/partidos',
+    '/distritos',
+    '/simulacion',
+    '/prioridades',
+    '/hoja-de-ruta',
+    '/mensajes',
+    '/competidores',
+    '/indicadores',
+  ],
+  COMM_LEAD: [
+    '/',
+    '/actos',
+    '/informe',
+    '/presentacion',
+    '/partidos',
+    '/simulacion',
+    '/prioridades',
+    '/hoja-de-ruta',
+    '/mensajes',
+    '/competidores',
+  ],
+  DISTRICT_LEAD: [
+    '/',
+    '/actos',
+    '/distritos',
+    '/resultados-2023',
+    '/mensajes',
+    '/informe',
+  ],
+  VOLUNTEER: [
+    '/',
+    '/actos',
+    '/mensajes',
+  ],
+};
+
+/**
+ * Comprueba si una ruta o botón del menú está autorizado y visible para un rol
+ */
+export function isRouteAllowedForRole(href: string, role: UserRole): boolean {
+  const allowed = ROLE_NAVIGATION_ACCESS[role] || ROLE_NAVIGATION_ACCESS.CAMPAIGN_DIRECTOR;
+  return allowed.includes(href);
+}

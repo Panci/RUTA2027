@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { MapPin, ChevronDown, Check, Plus, Settings } from 'lucide-react';
+import { MapPin, ChevronDown, Check, Plus, Settings, Search } from 'lucide-react';
 import Link from 'next/link';
 
 interface CampaignItem {
@@ -16,14 +16,17 @@ interface CampaignItem {
 export default function MunicipalitySelector({
   initialActiveId,
   initialCampaigns,
+  canSwitch = true,
 }: {
   initialActiveId: string | null;
   initialCampaigns: CampaignItem[];
+  canSwitch?: boolean;
 }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [campaigns, setCampaigns] = useState<CampaignItem[]>(initialCampaigns);
   const [activeId, setActiveId] = useState<string | null>(initialActiveId);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isSwitching, setIsSwitching] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -38,7 +41,20 @@ export default function MunicipalitySelector({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const activeCampaign = campaigns.find((c) => c.id === activeId) || campaigns[0];
+  const activeCampaign = useMemo(() => {
+    return campaigns.find((c) => c.id === activeId) || campaigns[0] || null;
+  }, [campaigns, activeId]);
+
+  const filteredCampaigns = useMemo(() => {
+    if (!searchTerm.trim()) return campaigns;
+    const q = searchTerm.toLowerCase().trim();
+    return campaigns.filter(
+      (c) =>
+        c.municipality.toLowerCase().includes(q) ||
+        c.partyOrCoalition.toLowerCase().includes(q) ||
+        c.candidacyName.toLowerCase().includes(q)
+    );
+  }, [campaigns, searchTerm]);
 
   const handleSelectCampaign = async (id: string) => {
     if (id === activeId || isSwitching) return;
@@ -64,6 +80,27 @@ export default function MunicipalitySelector({
     }
   };
 
+  // Si el usuario no tiene permisos para conmutar de municipio (ej. Director de Campaña o roles locales),
+  // se muestra una insignia estática sin desplegable ni listado de otros municipios
+  if (!canSwitch) {
+    return (
+      <div
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 shadow-2xs text-xs font-semibold select-none"
+        title={`Municipio asignado: ${activeCampaign ? activeCampaign.municipality : ''}`}
+      >
+        <MapPin className="w-4 h-4 text-red-600 shrink-0" />
+        <span className="font-bold text-slate-900 truncate max-w-[170px] md:max-w-[220px]">
+          {activeCampaign ? activeCampaign.municipality : 'Municipio Asignado'}
+        </span>
+        {activeCampaign && (
+          <span className="hidden sm:inline text-[10px] font-medium px-1.5 py-0.5 rounded bg-white text-slate-600 border border-slate-200 shadow-2xs">
+            {activeCampaign.partyOrCoalition}
+          </span>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -84,36 +121,58 @@ export default function MunicipalitySelector({
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 mt-1.5 w-72 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 animate-in fade-in-50">
-          <div className="px-3 py-1.5 border-b border-slate-100">
+        <div className="absolute left-0 mt-1.5 w-80 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 animate-in fade-in-50">
+          <div className="px-3 py-1.5 border-b border-slate-100 flex items-center justify-between">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
               Municipios en Campaña (2027)
             </p>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+              {filteredCampaigns.length} de {campaigns.length}
+            </span>
           </div>
 
-          <div className="max-h-60 overflow-y-auto py-1">
-            {campaigns.map((c) => {
-              const isCurrent = c.id === activeId;
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => handleSelectCampaign(c.id)}
-                  className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between transition ${
-                    isCurrent
-                      ? 'bg-red-50/80 text-red-900 font-bold'
-                      : 'text-slate-700 hover:bg-slate-50 font-medium'
-                  }`}
-                >
-                  <div className="truncate pr-2">
-                    <p className="truncate text-slate-900 font-semibold">{c.municipality}</p>
-                    <p className="text-[11px] text-slate-500 truncate">
-                      {c.candidacyName} • {c.partyOrCoalition}
-                    </p>
-                  </div>
-                  {isCurrent && <Check className="w-4 h-4 text-red-600 shrink-0" />}
-                </button>
-              );
-            })}
+          {/* Buscador de Municipios en tiempo real */}
+          <div className="p-2 border-b border-slate-100">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Buscar municipio..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-8 pr-2 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:bg-white placeholder:text-slate-400"
+                autoFocus
+              />
+            </div>
+          </div>
+
+          <div className="max-h-64 overflow-y-auto py-1">
+            {filteredCampaigns.length === 0 ? (
+              <p className="text-center text-xs text-slate-400 py-4">No se encontró ningún municipio</p>
+            ) : (
+              filteredCampaigns.map((c) => {
+                const isCurrent = c.id === activeId;
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => handleSelectCampaign(c.id)}
+                    className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between transition ${
+                      isCurrent
+                        ? 'bg-rose-50 text-rose-900 font-bold'
+                        : 'text-slate-700 hover:bg-slate-50 font-medium'
+                    }`}
+                  >
+                    <div className="truncate pr-2">
+                      <p className="truncate text-slate-900 font-semibold">{c.municipality}</p>
+                      <p className="text-[11px] text-slate-500 truncate">
+                        {c.candidacyName} • {c.partyOrCoalition}
+                      </p>
+                    </div>
+                    {isCurrent && <Check className="w-4 h-4 text-rose-600 shrink-0" />}
+                  </button>
+                );
+              })
+            )}
           </div>
 
           <div className="border-t border-slate-100 mt-1 pt-1 px-1.5 space-y-0.5">
