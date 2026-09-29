@@ -37,7 +37,7 @@ services:
       NEXTAUTH_URL: ${NEXTAUTH_URL:-https://campana.estrategiamunicipal.es}
       PORT: 3000
     ports:
-      - "${APP_PORT:-3005}:3000"
+      - "3005:3000"
     networks:
       - ruta2027-net
       - dokploy-network
