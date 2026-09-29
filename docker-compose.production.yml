@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Database: PostgreSQL 16 with persistent volume
   postgres:
@@ -39,12 +37,14 @@ services:
       NEXTAUTH_URL: ${NEXTAUTH_URL:-https://campana.estrategiamunicipal.es}
       PORT: 3000
     ports:
-      - "${APP_PORT:-3000}:3000"
+      - "${APP_PORT:-3005}:3000"
     networks:
       - ruta2027-net
+      - dokploy-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.ruta2027.rule=Host(`${APP_DOMAIN:-campana.tudominio.es}`)"
+      - "traefik.docker.network=dokploy-network"
+      - "traefik.http.routers.ruta2027.rule=Host(`${APP_DOMAIN:-campana.estrategiamunicipal.es}`)"
       - "traefik.http.routers.ruta2027.entrypoints=websecure"
       - "traefik.http.routers.ruta2027.tls.certresolver=letsencrypt"
       - "traefik.http.services.ruta2027.loadbalancer.server.port=3000"
@@ -78,3 +78,5 @@ networks:
   ruta2027-net:
     name: ruta2027_network
     driver: bridge
+  dokploy-network:
+    external: true
