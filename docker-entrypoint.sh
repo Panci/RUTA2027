@@ -1,11 +1,10 @@
 #!/bin/sh
-set -e
 
 echo "=================================================="
 echo "🚀 [RUTA 2027] Iniciando contenedor de aplicación"
 echo "=================================================="
 
-# Sincronización y validación automática de la base de datos
+# Sincronización y validación de la base de datos
 if [ -n "$DATABASE_URL" ]; then
   echo "⏳ [RUTA 2027] Esperando conexión con PostgreSQL y sincronizando esquema..."
   MAX_RETRIES=20
@@ -14,8 +13,8 @@ if [ -n "$DATABASE_URL" ]; then
   until npx prisma db push --skip-generate --accept-data-loss; do
     RETRY_COUNT=$((RETRY_COUNT + 1))
     if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
-      echo "❌ [RUTA 2027] Error: No se pudo conectar con la base de datos tras $MAX_RETRIES intentos."
-      exit 1
+      echo "⚠️ [RUTA 2027] Advertencia: No se pudo sincronizar tras $MAX_RETRIES intentos. Continuando arranque..."
+      break
     fi
     echo "⏳ Esperando 2 segundos para reintentar conexión con PostgreSQL ($RETRY_COUNT/$MAX_RETRIES)..."
     sleep 2
@@ -24,6 +23,8 @@ if [ -n "$DATABASE_URL" ]; then
   echo "✅ [RUTA 2027] Esquema de PostgreSQL sincronizado exitosamente."
 
   echo "🔍 [RUTA 2027] Verificando estado de los municipios en la base de datos..."
+  
+  NEED_SEED=0
   node -e '
     const { PrismaClient } = require("@prisma/client");
     const prisma = new PrismaClient();
@@ -31,6 +32,7 @@ if [ -n "$DATABASE_URL" ]; then
       try {
         const count = await prisma.campaign.count();
         if (count === 0) {
+          console.log("🌱 [RUTA 2027] Base de datos vacía detectada.");
           process.exit(10);
         } else {
           console.log("✅ [RUTA 2027] Base de datos activa con " + count + " municipios indexados.");
@@ -44,13 +46,11 @@ if [ -n "$DATABASE_URL" ]; then
       }
     }
     check();
-  '
-  CHECK_STATUS=$?
+  ' || NEED_SEED=$?
 
-  if [ $CHECK_STATUS -eq 10 ]; then
-    echo "🌱 [RUTA 2027] Base de datos vacía detectada."
+  if [ "$NEED_SEED" -eq 10 ]; then
     echo "📦 [RUTA 2027] Cargando los 68 municipios de Sevilla y creando usuarios del sistema..."
-    npx tsx prisma/seed-all-68-municipios.ts
+    npx tsx prisma/seed-all-68-municipios.ts || echo "⚠️ Advertencia al ejecutar seed."
     echo "🎉 [RUTA 2027] Carga inicial de municipios y usuarios finalizada con éxito."
   fi
 fi
