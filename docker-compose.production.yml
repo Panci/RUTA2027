@@ -34,7 +34,7 @@ services:
       DATABASE_URL: "postgresql://${POSTGRES_USER:-ruta2027_admin}:${POSTGRES_PASSWORD:-Ruta2027SuperSeguraDbPass!}@postgres:5432/${POSTGRES_DB:-ruta2027_db}?schema=public"
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-b8d7c4a1e9f023456789abcdef0123456789abcdef0123456789abcdef012345}
       AUTH_SECRET: ${NEXTAUTH_SECRET:-b8d7c4a1e9f023456789abcdef0123456789abcdef0123456789abcdef012345}
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-https://campana.estrategiamunicipal.es}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-https://ruta2027.estrategiamunicipal.es}
       PORT: 3000
     ports:
       - "3005:3000"
@@ -44,7 +44,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=dokploy-network"
-      - "traefik.http.routers.ruta2027.rule=Host(`${APP_DOMAIN:-campana.estrategiamunicipal.es}`)"
+      - "traefik.http.routers.ruta2027.rule=Host(`${APP_DOMAIN:-ruta2027.estrategiamunicipal.es}`)"
       - "traefik.http.routers.ruta2027.entrypoints=websecure"
       - "traefik.http.routers.ruta2027.tls.certresolver=letsencrypt"
       - "traefik.http.services.ruta2027.loadbalancer.server.port=3000"
