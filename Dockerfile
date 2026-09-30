@@ -37,24 +37,33 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Security: run as non-root user
+# Security: user nextjs with home directory for npm/npx cache
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+    adduser --system --uid 1001 -G nodejs nextjs && \
+    mkdir -p /home/nextjs/.npm /home/nextjs/.cache && \
+    chown -R nextjs:nodejs /home/nextjs
 
-# Copy standalone build & public assets
+# Copy runtime assets and dependencies for standalone Next.js & Prisma seeds
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/package-lock.json ./package-lock.json
+COPY --from=builder /app/sevilla_municipales_2023_municipios_menores_10000.csv ./sevilla_municipales_2023_municipios_menores_10000.csv
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+
+# Entrypoint script with automatic DB sync and seeding
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh && chown -R nextjs:nodejs /app
 
 USER nextjs
 
 EXPOSE 3000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD curl -f http://localhost:3000/api/health || exit 1
 
+ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["node", "server.js"]

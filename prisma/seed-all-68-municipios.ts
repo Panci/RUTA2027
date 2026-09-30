@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
 import Papa from 'papaparse';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -96,9 +97,14 @@ interface GroupedMunicipality {
 async function main() {
   console.log('🚀 Iniciando importación y actualización de los municipios de Sevilla desde el CSV...');
 
-  const csvPath = path.resolve(process.cwd(), 'sevilla_municipales_2023_municipios_menores_10000.csv');
+  let csvPath = path.resolve(process.cwd(), 'sevilla_municipales_2023_municipios_menores_10000.csv');
   if (!fs.existsSync(csvPath)) {
-    throw new Error(`No se encontró el archivo CSV en la ruta: ${csvPath}`);
+    const parentPath = path.resolve(__dirname, '..', 'sevilla_municipales_2023_municipios_menores_10000.csv');
+    if (fs.existsSync(parentPath)) {
+      csvPath = parentPath;
+    } else {
+      throw new Error(`No se encontró el archivo CSV en la ruta: ${csvPath} ni en ${parentPath}`);
+    }
   }
 
   const fileContent = fs.readFileSync(csvPath, 'utf-8');
@@ -392,12 +398,72 @@ async function main() {
     importedCount++;
   }
 
-  // 9. Re-vincular los usuarios del sistema al primer municipio
+  // 9. Re-vincular o crear usuarios del sistema
   const firstCampaign = await prisma.campaign.findFirst({
     orderBy: { municipality: 'asc' },
   });
 
-  if (firstCampaign) {
+  const existingUsers = await prisma.user.count();
+  if (existingUsers === 0) {
+    console.log('👤 Creando usuarios base del sistema para acceso a la plataforma...');
+    const passwordHash = await bcrypt.hash('Demo2027!', 10);
+    const superPasswordHash = await bcrypt.hash('super123', 10);
+
+    await prisma.user.createMany({
+      data: [
+        {
+          name: 'Super Administrador',
+          email: 'superadmin@elecciones.local',
+          passwordHash: superPasswordHash,
+          role: 'ADMIN',
+          campaignId: firstCampaign?.id,
+        },
+        {
+          name: 'Administrador General',
+          email: 'admin@campana.es',
+          passwordHash,
+          role: 'ADMIN',
+          campaignId: firstCampaign?.id,
+        },
+        {
+          name: 'Supervisor General (Observador)',
+          email: 'supervisor@campana.es',
+          passwordHash,
+          role: 'GLOBAL_SUPERVISOR',
+          campaignId: firstCampaign?.id,
+        },
+        {
+          name: 'Elena Ramos (Directora)',
+          email: 'directora@campana.es',
+          passwordHash,
+          role: 'CAMPAIGN_DIRECTOR',
+          campaignId: firstCampaign?.id,
+        },
+        {
+          name: 'Carlos Navarro (Candidato)',
+          email: 'candidato@campana.es',
+          passwordHash,
+          role: 'CANDIDATE',
+          campaignId: firstCampaign?.id,
+        },
+        {
+          name: 'Lucía Morales (Comunicación)',
+          email: 'comunicacion@campana.es',
+          passwordHash,
+          role: 'COMM_LEAD',
+          campaignId: firstCampaign?.id,
+        },
+        {
+          name: 'Javier Domínguez (Distrito 1)',
+          email: 'territorial1@campana.es',
+          passwordHash,
+          role: 'DISTRICT_LEAD',
+          campaignId: firstCampaign?.id,
+        },
+      ],
+    });
+    console.log('✅ Usuarios base creados con éxito (Admin, Supervisor, Directora, etc.).');
+  } else if (firstCampaign) {
     await prisma.user.updateMany({
       data: { campaignId: firstCampaign.id },
     });
